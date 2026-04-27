@@ -102,6 +102,27 @@
           />
         </div>
       </div>
+      <div class="field">
+        <label>weight (kg) <span class="optional">optional</span></label>
+        <input v-model.number="identity.weight_kg" type="number" min="20" max="300" step="0.5" placeholder="e.g. 70" />
+      </div>
+      <div class="field">
+        <label>biological sex <span class="optional">optional — used for calorie estimates</span></label>
+        <div class="radio-row">
+          <label class="radio-label" v-for="opt in SEX_OPTIONS" :key="opt.value">
+            <input type="radio" :value="opt.value" v-model="identity.sex" />
+            {{ opt.label }}
+          </label>
+        </div>
+      </div>
+      <div class="field">
+        <label>gender <span class="optional">optional</span></label>
+        <input v-model="identity.gender" placeholder="e.g. non-binary" />
+      </div>
+      <div class="field">
+        <label>date of birth <span class="optional">optional — used for calorie estimates</span></label>
+        <input v-model="identity.birthday" type="date" />
+      </div>
       <div v-if="error" class="error">{{ error }}</div>
       <button class="btn btn-primary" :disabled="loading" @click="join">
         {{ loading ? 'joining…' : 'join trek' }}
@@ -117,6 +138,11 @@ import { useAuthStore } from '../stores/auth'
 import { useTrekStore } from '../stores/trek'
 
 const COLORS = ['#4f9cf9','#f97f4f','#4fcc8a','#c97ff9','#f9cf4f','#f94f7f','#4ff9f0','#a0aec0']
+const SEX_OPTIONS = [
+  { value: 'M', label: 'male' },
+  { value: 'F', label: 'female' },
+  { value: 'X', label: 'other / prefer not to say' },
+]
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -139,6 +165,10 @@ const form = reactive({
 const identity = reactive({
   name: auth.user?.username ?? '',
   color: auth.user?.color ?? COLORS[0],
+  weight_kg: auth.user?.weight_kg as number | undefined,
+  sex: auth.user?.sex ?? '' as any,
+  gender: auth.user?.gender ?? '',
+  birthday: auth.user?.birthday ?? '',
 })
 
 async function create() {
@@ -170,6 +200,10 @@ async function join() {
       guest_name: auth.user ? undefined : identity.name,
       user_id: auth.user?.id,
       color: identity.color,
+      weight_kg: identity.weight_kg || undefined,
+      sex: identity.sex || undefined,
+      gender: identity.gender || undefined,
+      birthday: identity.birthday || undefined,
     })
     router.push(`/trek/${code}`)
   } catch (e: any) {
@@ -218,4 +252,7 @@ async function join() {
 .color-swatch.active { border-color: #fff; transform: scale(1.15); }
 
 .error { color: #f97f4f; font-size: 0.85rem; }
+.optional { font-weight: 400; color: #555e78; text-transform: none; letter-spacing: 0; font-size: 0.75rem; }
+.radio-row { display: flex; gap: 1rem; flex-wrap: wrap; }
+.radio-label { display: flex; align-items: center; gap: 0.35rem; font-size: 0.9rem; cursor: pointer; }
 </style>
