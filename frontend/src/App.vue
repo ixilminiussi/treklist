@@ -115,4 +115,10 @@ input:focus, select:focus, textarea:focus { border-color: #4f9cf9; }
 .btn-ghost:hover { color: #e8eaf0; border-color: #4a4f6a; }
 .btn-danger { background: #e05252; color: #fff; }
 .btn-sm { padding: 0.3rem 0.75rem; font-size: 0.8rem; }
+
+/* mobile */
+@media (max-width: 600px) {
+  .nav { padding: 0 1rem; }
+  input, select, textarea { font-size: 16px; } /* prevent zoom on iOS */
+}
 </style>

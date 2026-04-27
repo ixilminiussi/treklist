@@ -75,7 +75,17 @@
                   @change="onStatusChange(entry.name, $event)"
                   @quantity-change="onQuantityChange(entry.name, $event)"
                 />
-                <StatusBadge v-else :status="statusOf(t.id, entry.name)" :color="t.color" />
+                <template v-else>
+                  <ProvisionDisplay
+                    v-if="provisionFor(entry.name, t.id)"
+                    :provision="provisionFor(entry.name, t.id)!"
+                    :my-trekker-id="store.myTrekker?.id ?? ''"
+                    :color="t.color"
+                    @claim="claimProvision"
+                    @unclaim="unclaimProvision"
+                  />
+                  <StatusBadge v-else :status="statusOf(t.id, entry.name)" :color="t.color" />
+                </template>
               </td>
             </tr>
           </template>
@@ -132,6 +142,7 @@ import { useTrekStore } from '../stores/trek'
 import { useAuthStore } from '../stores/auth'
 import StatusPicker from '../components/StatusPicker.vue'
 import StatusBadge from '../components/StatusBadge.vue'
+import ProvisionDisplay from '../components/ProvisionDisplay.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -177,6 +188,10 @@ const allRows = computed(() => {
 
 function statusOf(trekkerId: string, itemName: string) {
   return store.statuses.find(s => s.trekker_id === trekkerId && s.item_name === itemName)?.status ?? ''
+}
+
+function provisionFor(itemName: string, trekkerId: string) {
+  return store.provisions.find(p => p.item_name === itemName && p.trekker_id === trekkerId) ?? null
 }
 
 function annotationsFor(itemName: string) {
@@ -440,8 +455,8 @@ function copyCode() { navigator.clipboard.writeText(store.trek?.code ?? '') }
 .weight-input { width: 60px; background: transparent; border: 1px solid #2a2d3e; border-radius: 4px; padding: 0.15rem 0.3rem; font-size: 0.75rem; color: #e8eaf0; }
 
 /* modals */
-.modal-backdrop { position: fixed; inset: 0; background: #00000088; display: flex; align-items: center; justify-content: center; z-index: 200; }
-.modal { background: #141620; border: 1px solid #1e2030; border-radius: 12px; padding: 1.5rem; min-width: 340px; max-width: 480px; display: flex; flex-direction: column; gap: 1rem; }
+.modal-backdrop { position: fixed; inset: 0; background: #00000088; display: flex; align-items: center; justify-content: center; z-index: 200; padding: 1rem; }
+.modal { background: #141620; border: 1px solid #1e2030; border-radius: 12px; padding: 1.5rem; width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 1rem; }
 .modal h3 { font-size: 1rem; font-weight: 600; }
 .annotation-list { display: flex; flex-direction: column; gap: 0.75rem; max-height: 240px; overflow-y: auto; }
 .annotation { display: flex; align-items: flex-start; gap: 0.5rem; }
@@ -450,4 +465,27 @@ function copyCode() { navigator.clipboard.writeText(store.trek?.code ?? '') }
 .ann-empty { color: #8b92a8; font-size: 0.85rem; }
 .ann-compose { display: flex; gap: 0.5rem; }
 .ann-compose input { flex: 1; }
+
+/* mobile */
+@media (max-width: 700px) {
+  .trek-header {
+    padding: 0.5rem 0.75rem;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+  }
+  .trek-code { font-size: 0.95rem; letter-spacing: 0.15em; }
+  .trekkers-pills { gap: 0.35rem; }
+  .trekker-pill { padding: 0.2rem 0.45rem; font-size: 0.75rem; }
+  .header-actions { margin-left: 0; width: 100%; justify-content: flex-end; }
+
+  /* checklist: touch scroll */
+  .checklist-area {
+    -webkit-overflow-scrolling: touch;
+    overflow: auto;
+  }
+  .th-trekker { min-width: 180px; width: 180px; }
+  .td-status { padding: 0.35rem 0.4rem; }
+
+  /* cycle button touch-friendly height */
+}
 </style>

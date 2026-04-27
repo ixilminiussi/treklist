@@ -137,4 +137,10 @@ async function saveProfile() {
 .big-dot { width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; }
 .username { font-weight: 700; font-size: 1.05rem; }
 .email { font-size: 0.8rem; color: #8b92a8; }
+
+@media (max-width: 600px) {
+  .profile-page { padding: 0 0.75rem; margin-top: 1.5rem; }
+  .panel { padding: 1.25rem; }
+  .grid-2 { grid-template-columns: 1fr; }
+}
 </style>

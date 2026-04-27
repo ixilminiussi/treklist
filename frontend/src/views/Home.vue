@@ -251,4 +251,13 @@ async function join() {
 .optional { font-weight: 400; color: #555e78; text-transform: none; letter-spacing: 0; font-size: 0.75rem; }
 .radio-row { display: flex; gap: 1rem; flex-wrap: wrap; }
 .radio-label { display: flex; align-items: center; gap: 0.35rem; font-size: 0.9rem; cursor: pointer; }
+
+@media (max-width: 600px) {
+  .home { padding: 2rem 1rem; }
+  .hero h1 { font-size: 2rem; }
+  .panel { padding: 1.25rem; }
+  .grid-2 { grid-template-columns: 1fr; }
+  .hero-actions { flex-direction: column; }
+  .btn { width: 100%; justify-content: center; }
+}
 </style>
