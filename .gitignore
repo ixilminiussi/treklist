@@ -1,13 +1,12 @@
 # deps
 frontend/node_modules/
 frontend/dist/
+worker/node_modules/
+frontend2/
 
 # env
-backend/.env
 frontend/.env
-
-# build artifacts
-backend/server
+worker/.env
 
 # editor
 .idea/
