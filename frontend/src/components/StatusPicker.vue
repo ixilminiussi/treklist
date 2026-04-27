@@ -31,7 +31,7 @@ const emit = defineEmits<{
   quantityChange: [number]
 }>()
 
-const CYCLE = ['', 'need', 'will_get', 'got_it', 'provided', 'shared', 'dont_need']
+const CYCLE = ['need', 'will_get', 'got_it', 'provided', 'shared', 'dont_need']
 
 const LABELS: Record<string, string> = {
   '': '—',
