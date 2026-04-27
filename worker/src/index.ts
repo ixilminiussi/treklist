@@ -17,8 +17,14 @@ export interface Env {
 const app = new Hono<{ Bindings: Env }>()
 
 app.use('*', async (c, next) => {
-  const origins = (c.env.ALLOWED_ORIGIN || '*').split(',').map(s => s.trim())
-  const origin = (o: string) => origins.includes(o) ? o : origins[0]
+  const allowed = (c.env.ALLOWED_ORIGIN || '*').split(',').map(s => s.trim())
+  const origin = (o: string) => {
+    if (allowed.includes('*')) return o
+    if (allowed.includes(o)) return o
+    // allow any *.treklist.pages.dev preview URL
+    if (o.endsWith('.treklist.pages.dev')) return o
+    return allowed[0]
+  }
   return cors({ origin, allowHeaders: ['Content-Type', 'X-Session-Token'], allowMethods: ['GET','POST','PATCH','DELETE','OPTIONS'] })(c, next)
 })
 
