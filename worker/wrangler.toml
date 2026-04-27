@@ -1,0 +1,12 @@
+name = "treklist-api"
+main = "src/index.ts"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "treklist"
+database_id = "fd9c4605-f329-4ff7-8e10-3b4970d1a877"
+
+[vars]
+ALLOWED_ORIGIN = "https://treklist.pages.dev,https://7d7d6ffc.treklist.pages.dev"

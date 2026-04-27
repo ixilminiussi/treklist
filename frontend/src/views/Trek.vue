@@ -220,7 +220,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useTrekStore } from '../stores/trek'
 import { useAuthStore } from '../stores/auth'
@@ -243,6 +243,8 @@ const provForm = ref({ type: 'provided', quantity: 1 })
 const newItemName = ref('')
 
 const code = route.params.code as string
+
+onUnmounted(() => store.stopPolling())
 
 onMounted(async () => {
   try {

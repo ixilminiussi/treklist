@@ -1,7 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { treksApi, type Trek, type Trekker, type ChecklistItem } from '../api/treks'
-import { wsUrl } from '../api/client'
 
 export interface ItemStatus {
   trekker_id: string
@@ -55,7 +54,7 @@ export const useTrekStore = defineStore('trek', () => {
   const customItems = ref<CustomItem[]>([])
   const trekkerWeights = ref<TrekkerWeight[]>([])
 
-  let socket: WebSocket | null = null
+  let pollInterval: ReturnType<typeof setInterval> | null = null
 
   const trekkerMap = computed(() =>
     Object.fromEntries(trekkers.value.map(t => [t.id, t]))
@@ -114,7 +113,7 @@ export const useTrekStore = defineStore('trek', () => {
       )
     }
 
-    connectWS(code)
+    startPolling(code)
   }
 
   function groupProvisions(raw: any[]): Provision[] {
@@ -130,56 +129,26 @@ export const useTrekStore = defineStore('trek', () => {
     return Object.values(map)
   }
 
-  function connectWS(code: string) {
-    if (socket) socket.close()
-    socket = new WebSocket(wsUrl(code))
-    socket.onmessage = (ev) => handleWSMessage(JSON.parse(ev.data))
-    socket.onclose = () => {
-      setTimeout(() => connectWS(code), 2000)
-    }
+  function startPolling(code: string) {
+    if (pollInterval) clearInterval(pollInterval)
+    pollInterval = setInterval(async () => {
+      try {
+        const [trekData, itemData] = await Promise.all([
+          treksApi.get(code),
+          treksApi.getItems(code),
+        ])
+        trekkers.value = trekData.trekkers
+        statuses.value = itemData.statuses ?? []
+        provisions.value = groupProvisions(itemData.provisions ?? [])
+        annotations.value = itemData.annotations ?? []
+        customItems.value = itemData.custom_items ?? []
+        trekkerWeights.value = itemData.weights ?? []
+      } catch { /* silent — network blip */ }
+    }, 2500)
   }
 
-  function handleWSMessage(msg: { type: string; payload: any }) {
-    switch (msg.type) {
-      case 'status_update': {
-        const idx = statuses.value.findIndex(
-          s => s.trekker_id === msg.payload.trekker_id && s.item_name === msg.payload.item_name
-        )
-        if (idx >= 0) statuses.value[idx] = msg.payload
-        else statuses.value.push(msg.payload)
-        break
-      }
-      case 'provision_update': {
-        const idx = provisions.value.findIndex(p => p.id === msg.payload.id)
-        if (idx >= 0) provisions.value[idx] = msg.payload
-        else provisions.value.push(msg.payload)
-        break
-      }
-      case 'claim_update': {
-        const prov = provisions.value.find(p => p.id === msg.payload.provision_id)
-        if (prov) {
-          if (msg.payload.action === 'add') prov.claims.push({ id: msg.payload.claim_id, claimed_by: msg.payload.claimed_by })
-          else prov.claims = prov.claims.filter(c => c.claimed_by !== msg.payload.claimed_by)
-        }
-        break
-      }
-      case 'annotation_add':
-        annotations.value.push(msg.payload)
-        break
-      case 'annotation_delete':
-        annotations.value = annotations.value.filter(a => a.id !== msg.payload.id)
-        break
-      case 'custom_item_add':
-        customItems.value.push(msg.payload)
-        break
-      case 'trekker_join':
-        if (!trekkers.value.find(t => t.id === msg.payload.id))
-          trekkers.value.push(msg.payload)
-        break
-      case 'trekker_kick':
-        trekkers.value = trekkers.value.filter(t => t.id !== msg.payload.id)
-        break
-    }
+  function stopPolling() {
+    if (pollInterval) { clearInterval(pollInterval); pollInterval = null }
   }
 
   async function setStatus(item_name: string, status: string) {
@@ -231,6 +200,6 @@ export const useTrekStore = defineStore('trek', () => {
     trek, trekkers, myTrekker, checklist, defaultWeights,
     statuses, provisions, annotations, customItems, trekkerWeights,
     trekkerMap, myStatuses,
-    createTrek, joinTrek, loadTrek, setStatus, bagWeight, filteredChecklist,
+    createTrek, joinTrek, loadTrek, setStatus, bagWeight, filteredChecklist, stopPolling,
   }
 })
