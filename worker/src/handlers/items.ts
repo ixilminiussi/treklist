@@ -60,6 +60,14 @@ export async function setItemStatus(c: Context<{ Bindings: Env }>) {
   if (!trekker) return c.json({ error: 'unauthorized' }, 401)
 
   const { item_name, status } = await c.req.json<any>()
+
+  if (!status) {
+    await c.env.DB.prepare(
+      `DELETE FROM item_statuses WHERE trekker_id = ? AND item_name = ?`
+    ).bind(trekker.id, item_name).run()
+    return c.json({ trekker_id: trekker.id, item_name, status: '' })
+  }
+
   await c.env.DB.prepare(
     `INSERT INTO item_statuses (trekker_id, item_name, status, updated_at) VALUES (?, ?, ?, ?)
      ON CONFLICT(trekker_id, item_name) DO UPDATE SET status=excluded.status, updated_at=excluded.updated_at`

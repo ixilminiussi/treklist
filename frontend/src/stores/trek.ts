@@ -154,13 +154,16 @@ export const useTrekStore = defineStore('trek', () => {
   async function setStatus(item_name: string, status: string) {
     if (!trek.value) return
     await treksApi.setStatus(trek.value.code, item_name, status)
-    // Optimistic update — WS will confirm
     const idx = statuses.value.findIndex(
       s => s.trekker_id === myTrekker.value?.id && s.item_name === item_name
     )
-    const row: ItemStatus = { trekker_id: myTrekker.value!.id, item_name, status, updated_at: new Date().toISOString() }
-    if (idx >= 0) statuses.value[idx] = row
-    else statuses.value.push(row)
+    if (!status) {
+      if (idx >= 0) statuses.value.splice(idx, 1)
+    } else {
+      const row: ItemStatus = { trekker_id: myTrekker.value!.id, item_name, status, updated_at: new Date().toISOString() }
+      if (idx >= 0) statuses.value[idx] = row
+      else statuses.value.push(row)
+    }
   }
 
   function bagWeight(trekkerId: string): number {
