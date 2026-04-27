@@ -1,0 +1,18 @@
+# deps
+frontend/node_modules/
+frontend/dist/
+
+# env
+backend/.env
+frontend/.env
+
+# build artifacts
+backend/server
+
+# editor
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store

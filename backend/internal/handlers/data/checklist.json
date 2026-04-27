@@ -1,0 +1,785 @@
+[
+  {
+    "type": "category",
+    "name": "Camp",
+    "filters": {}
+  },
+  {
+    "type": "item",
+    "name": "Tent",
+    "category": "Camp",
+    "filters": {
+      "camping": "Tent"
+    }
+  },
+  {
+    "type": "item",
+    "name": "Survival Blanket",
+    "category": "Camp",
+    "filters": {
+      "camping": "Tent"
+    }
+  },
+  {
+    "type": "item",
+    "name": "Sleeping pad",
+    "category": "Camp",
+    "filters": {}
+  },
+  {
+    "type": "item",
+    "name": "Sleeping bag",
+    "category": "Camp",
+    "filters": {}
+  },
+  {
+    "type": "item",
+    "name": "Liner",
+    "category": "Camp",
+    "filters": {}
+  },
+  {
+    "type": "item",
+    "name": "Mattress",
+    "category": "Camp",
+    "filters": {}
+  },
+  {
+    "type": "item",
+    "name": "Hammock",
+    "category": "Camp",
+    "filters": {
+      "camping": "Hammock"
+    }
+  },
+  {
+    "type": "item",
+    "name": "Underquilt",
+    "category": "Camp",
+    "filters": {
+      "camping": "Hammock",
+      "weather": "Cold Mixed"
+    }
+  },
+  {
+    "type": "item",
+    "name": "Tarp",
+    "category": "Camp",
+    "filters": {
+      "camping": "Hammock"
+    }
+  },
+  {
+    "type": "item",
+    "name": "Mosquito net",
+    "category": "Camp",
+    "filters": {
+      "camping": "Hammock"
+    }
+  },
+  {
+    "type": "category",
+    "name": "Packing",
+    "filters": {
+      "trek_type": "Snow Hike"
+    }
+  },
+  {
+    "type": "item",
+    "name": "Backpack",
+    "category": "Packing",
+    "filters": {
+      "trek_type": "Snow Hike"
+    }
+  },
+  {
+    "type": "item",
+    "name": "Waterproof cover",
+    "category": "Packing",
+    "filters": {
+      "trek_type": "Snow Hike",
+      "weather": "Wet Mixed"
+    }
+  },
+  {
+    "type": "item",
+    "name": "Camel bag",
+    "category": "Packing",
+    "filters": {
+      "trek_type": "Snow Hike"
+    }
+  },
+  {
+    "type": "item",
+    "name": "Trekking poles",
+    "category": "Packing",
+    "filters": {
+      "trek_type": "Snow Hike"
+    }
+  },
+  {
+    "type": "category",
+    "name": "Snow",
+    "filters": {
+      "trek_type": "Snow"
+    }
+  },
+  {
+    "type": "item",
+    "name": "Shovel",
+    "category": "Snow",
+    "filters": {
+      "trek_type": "Snow"
+    }
+  },
+  {
+    "type": "item",
+    "name": "Search beacon",
+    "category": "Snow",
+    "filters": {
+      "trek_type": "Snow"
+    }
+  },
+  {
+    "type": "item",
+    "name": "Search rod",
+    "category": "Snow",
+    "filters": {
+      "trek_type": "Snow"
+    }
+  },
+  {
+    "type": "item",
+    "name": "Snow shoe / Ski",
+    "category": "Snow",
+    "filters": {
+      "trek_type": "Snow"
+    }
+  },
+  {
+    "type": "item",
+    "name": "Sledge",
+    "category": "Snow",
+    "filters": {
+      "trek_type": "Snow"
+    }
+  },
+  {
+    "type": "category",
+    "name": "Bike",
+    "filters": {
+      "trek_type": "Bikepacking"
+    }
+  },
+  {
+    "type": "item",
+    "name": "Bike lamps",
+    "category": "Bike",
+    "filters": {
+      "trek_type": "Bikepacking"
+    }
+  },
+  {
+    "type": "item",
+    "name": "Bike lock",
+    "category": "Bike",
+    "filters": {
+      "trek_type": "Bikepacking"
+    }
+  },
+  {
+    "type": "item",
+    "name": "Bikepacks",
+    "category": "Bike",
+    "filters": {
+      "trek_type": "Bikepacking"
+    }
+  },
+  {
+    "type": "item",
+    "name": "Waterproof cover",
+    "category": "Bike",
+    "filters": {
+      "trek_type": "Bikepacking",
+      "weather": "Wet Mixed"
+    }
+  },
+  {
+    "type": "item",
+    "name": "Bikepack holder",
+    "category": "Bike",
+    "filters": {
+      "trek_type": "Bikepacking"
+    }
+  },
+  {
+    "type": "category",
+    "name": "Clothing",
+    "filters": {}
+  },
+  {
+    "type": "item",
+    "name": "Underwear",
+    "category": "Clothing",
+    "filters": {}
+  },
+  {
+    "type": "item",
+    "name": "Base layer",
+    "category": "Clothing",
+    "filters": {}
+  },
+  {
+    "type": "item",
+    "name": "Insulating layer",
+    "category": "Clothing",
+    "filters": {
+      "weather": "Cold Mixed"
+    }
+  },
+  {
+    "type": "item",
+    "name": "Bike shorts",
+    "category": "Clothing",
+    "filters": {
+      "trek_type": "Bikepacking"
+    }
+  },
+  {
+    "type": "item",
+    "name": "Strong layer",
+    "category": "Clothing",
+    "filters": {}
+  },
+  {
+    "type": "item",
+    "name": "Visibility vest",
+    "category": "Clothing",
+    "filters": {
+      "trek_type": "Bikepacking"
+    }
+  },
+  {
+    "type": "item",
+    "name": "Wind/rain layer",
+    "category": "Clothing",
+    "filters": {
+      "weather": "Cold Mixed"
+    }
+  },
+  {
+    "type": "item",
+    "name": "Poncho",
+    "category": "Clothing",
+    "filters": {
+      "weather": "Wet Mixed"
+    }
+  },
+  {
+    "type": "item",
+    "name": "Cap/hat",
+    "category": "Clothing",
+    "filters": {}
+  },
+  {
+    "type": "item",
+    "name": "Helmet",
+    "category": "Clothing",
+    "filters": {
+      "trek_type": "Bikepacking"
+    }
+  },
+  {
+    "type": "item",
+    "name": "Sunglasses",
+    "category": "Clothing",
+    "filters": {
+      "weather": "Dry Mixed"
+    }
+  },
+  {
+    "type": "item",
+    "name": "Ski goggles",
+    "category": "Clothing",
+    "filters": {
+      "trek_type": "Snow"
+    }
+  },
+  {
+    "type": "item",
+    "name": "Neck gater",
+    "category": "Clothing",
+    "filters": {
+      "weather": "Cold Mixed"
+    }
+  },
+  {
+    "type": "item",
+    "name": "Gloves",
+    "category": "Clothing",
+    "filters": {
+      "weather": "Cold Mixed"
+    }
+  },
+  {
+    "type": "item",
+    "name": "Beanie",
+    "category": "Clothing",
+    "filters": {
+      "weather": "Cold Mixed"
+    }
+  },
+  {
+    "type": "item",
+    "name": "Hiking shoes",
+    "category": "Clothing",
+    "filters": {
+      "trek_type": "Hike"
+    }
+  },
+  {
+    "type": "item",
+    "name": "Ankle Gaters",
+    "category": "Clothing",
+    "filters": {
+      "trek_type": "Snow",
+      "weather": "Wet"
+    }
+  },
+  {
+    "type": "item",
+    "name": "Snow boots",
+    "category": "Clothing",
+    "filters": {
+      "trek_type": "Snow"
+    }
+  },
+  {
+    "type": "item",
+    "name": "Bike shoes",
+    "category": "Clothing",
+    "filters": {
+      "trek_type": "Bikepacking"
+    }
+  },
+  {
+    "type": "item",
+    "name": "Waiting shoes",
+    "category": "Clothing",
+    "filters": {}
+  },
+  {
+    "type": "item",
+    "name": "Pyjamas",
+    "category": "Clothing",
+    "filters": {}
+  },
+  {
+    "type": "item",
+    "name": "Warm socks",
+    "category": "Clothing",
+    "filters": {
+      "weather": "Cold Mixed"
+    }
+  },
+  {
+    "type": "category",
+    "name": "Health",
+    "filters": {}
+  },
+  {
+    "type": "item",
+    "name": "Toothbrush",
+    "category": "Health",
+    "filters": {}
+  },
+  {
+    "type": "item",
+    "name": "Toothpaste",
+    "category": "Health",
+    "filters": {}
+  },
+  {
+    "type": "item",
+    "name": "Lipbalm",
+    "category": "Health",
+    "filters": {}
+  },
+  {
+    "type": "item",
+    "name": "Tissues",
+    "category": "Health",
+    "filters": {}
+  },
+  {
+    "type": "item",
+    "name": "Personal medication",
+    "category": "Health",
+    "filters": {}
+  },
+  {
+    "type": "item",
+    "name": "Hand sanitizer",
+    "category": "Health",
+    "filters": {}
+  },
+  {
+    "type": "item",
+    "name": "Wippies",
+    "category": "Health",
+    "filters": {}
+  },
+  {
+    "type": "item",
+    "name": "Resealable bags",
+    "category": "Health",
+    "filters": {}
+  },
+  {
+    "type": "item",
+    "name": "Sunscreen",
+    "category": "Health",
+    "filters": {
+      "weather": "Dry Mixed"
+    }
+  },
+  {
+    "type": "item",
+    "name": "Mosquito spray",
+    "category": "Health",
+    "filters": {
+      "weather": "Dry Mixed"
+    }
+  },
+  {
+    "type": "item",
+    "name": "Towel",
+    "category": "Health",
+    "filters": {}
+  },
+  {
+    "type": "item",
+    "name": "Trash bags",
+    "category": "Health",
+    "filters": {}
+  },
+  {
+    "type": "item",
+    "name": "First aid kit",
+    "category": "Health",
+    "filters": {}
+  },
+  {
+    "type": "item",
+    "name": "Blister dressing",
+    "category": "Health",
+    "filters": {}
+  },
+  {
+    "type": "item",
+    "name": "Hand/toe warmers",
+    "category": "Health",
+    "filters": {
+      "weather": "Cold Mixed"
+    }
+  },
+  {
+    "type": "category",
+    "name": "Food",
+    "filters": {}
+  },
+  {
+    "type": "item",
+    "name": "Water containers",
+    "category": "Food",
+    "filters": {}
+  },
+  {
+    "type": "item",
+    "name": "Lyophilised food",
+    "category": "Food",
+    "filters": {
+      "food_source": "Self-sustaining"
+    }
+  },
+  {
+    "type": "item",
+    "name": "High energy snacks",
+    "category": "Food",
+    "filters": {}
+  },
+  {
+    "type": "item",
+    "name": "Drink mixes",
+    "category": "Food",
+    "filters": {}
+  },
+  {
+    "type": "item",
+    "name": "Insulated bottle",
+    "category": "Food",
+    "filters": {
+      "weather": "Cold Mixed"
+    }
+  },
+  {
+    "type": "item",
+    "name": "Cutlery",
+    "category": "Food",
+    "filters": {
+      "food_source": "Self-sustaining"
+    }
+  },
+  {
+    "type": "item",
+    "name": "Knife",
+    "category": "Food",
+    "filters": {
+      "food_source": "Self-sustaining"
+    }
+  },
+  {
+    "type": "item",
+    "name": "Camping stove",
+    "category": "Food",
+    "filters": {
+      "food_source": "Self-sustaining"
+    }
+  },
+  {
+    "type": "item",
+    "name": "Stove charges",
+    "category": "Food",
+    "filters": {
+      "food_source": "Self-sustaining"
+    }
+  },
+  {
+    "type": "item",
+    "name": "Lighter / matches",
+    "category": "Food",
+    "filters": {
+      "food_source": "Self-sustaining"
+    }
+  },
+  {
+    "type": "item",
+    "name": "Water filter / pastils",
+    "category": "Food",
+    "filters": {
+      "food_source": "Self-sustaining"
+    }
+  },
+  {
+    "type": "category",
+    "name": "Fixer",
+    "filters": {}
+  },
+  {
+    "type": "item",
+    "name": "Duct tape",
+    "category": "Fixer",
+    "filters": {}
+  },
+  {
+    "type": "item",
+    "name": "Swiss army knife",
+    "category": "Fixer",
+    "filters": {}
+  },
+  {
+    "type": "item",
+    "name": "Rope",
+    "category": "Fixer",
+    "filters": {}
+  },
+  {
+    "type": "item",
+    "name": "Bike pump",
+    "category": "Fixer",
+    "filters": {
+      "trek_type": "Bikepacking"
+    }
+  },
+  {
+    "type": "item",
+    "name": "Tire repair kit",
+    "category": "Fixer",
+    "filters": {
+      "trek_type": "Bikepacking"
+    }
+  },
+  {
+    "type": "item",
+    "name": "Bungee cord",
+    "category": "Fixer",
+    "filters": {
+      "trek_type": "Bikepacking"
+    }
+  },
+  {
+    "type": "category",
+    "name": "Tech",
+    "filters": {}
+  },
+  {
+    "type": "item",
+    "name": "Phone",
+    "category": "Tech",
+    "filters": {}
+  },
+  {
+    "type": "item",
+    "name": "External battery",
+    "category": "Tech",
+    "filters": {}
+  },
+  {
+    "type": "item",
+    "name": "Solar battery",
+    "category": "Tech",
+    "filters": {}
+  },
+  {
+    "type": "item",
+    "name": "Charging cables",
+    "category": "Tech",
+    "filters": {}
+  },
+  {
+    "type": "item",
+    "name": "Offline maps",
+    "category": "Tech",
+    "filters": {}
+  },
+  {
+    "type": "item",
+    "name": "GPX",
+    "category": "Tech",
+    "filters": {}
+  },
+  {
+    "type": "item",
+    "name": "Itinerary",
+    "category": "Tech",
+    "filters": {}
+  },
+  {
+    "type": "item",
+    "name": "Guide book",
+    "category": "Tech",
+    "filters": {}
+  },
+  {
+    "type": "item",
+    "name": "Headlight",
+    "category": "Tech",
+    "filters": {}
+  },
+  {
+    "type": "item",
+    "name": "Lamp",
+    "category": "Tech",
+    "filters": {}
+  },
+  {
+    "type": "item",
+    "name": "Compass",
+    "category": "Tech",
+    "filters": {}
+  },
+  {
+    "type": "item",
+    "name": "Whistle",
+    "category": "Tech",
+    "filters": {}
+  },
+  {
+    "type": "item",
+    "name": "Watch",
+    "category": "Tech",
+    "filters": {}
+  },
+  {
+    "type": "category",
+    "name": "Wallet",
+    "filters": {}
+  },
+  {
+    "type": "item",
+    "name": "ID",
+    "category": "Wallet",
+    "filters": {}
+  },
+  {
+    "type": "item",
+    "name": "Insurance card",
+    "category": "Wallet",
+    "filters": {}
+  },
+  {
+    "type": "item",
+    "name": "Credit card",
+    "category": "Wallet",
+    "filters": {}
+  },
+  {
+    "type": "item",
+    "name": "Cash",
+    "category": "Wallet",
+    "filters": {}
+  },
+  {
+    "type": "category",
+    "name": "Entertainment",
+    "filters": {}
+  },
+  {
+    "type": "item",
+    "name": "Book",
+    "category": "Entertainment",
+    "filters": {}
+  },
+  {
+    "type": "item",
+    "name": "Cards",
+    "category": "Entertainment",
+    "filters": {}
+  },
+  {
+    "type": "item",
+    "name": "Journal",
+    "category": "Entertainment",
+    "filters": {}
+  },
+  {
+    "type": "item",
+    "name": "Earbuds",
+    "category": "Entertainment",
+    "filters": {}
+  },
+  {
+    "type": "item",
+    "name": "Offline songs/podcast",
+    "category": "Entertainment",
+    "filters": {}
+  },
+  {
+    "type": "item",
+    "name": "Camera + batteries",
+    "category": "Entertainment",
+    "filters": {}
+  },
+  {
+    "type": "item",
+    "name": "SD Card",
+    "category": "Entertainment",
+    "filters": {}
+  },
+  {
+    "type": "item",
+    "name": "Swimsuit",
+    "category": "Entertainment",
+    "filters": {}
+  }
+]
