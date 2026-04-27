@@ -31,10 +31,6 @@
           </div>
         </div>
         <div class="field">
-          <label>gender identity <span class="optional">(optional · affects visual indicator only)</span></label>
-          <input v-model="regForm.gender" placeholder="e.g. non-binary, agender…" />
-        </div>
-        <div class="field">
           <label>your color</label>
           <div class="color-row">
             <button v-for="c in COLORS" :key="c" class="color-swatch" :class="{ active: regForm.color === c }" :style="{ background: c }" @click="regForm.color = c" />
@@ -67,7 +63,6 @@
           </select>
         </div>
         <div class="field"><label>birthday</label><input v-model="editForm.birthday" type="date" /></div>
-        <div class="field"><label>gender identity</label><input v-model="editForm.gender" /></div>
       </div>
       <div class="field">
         <label>color</label>

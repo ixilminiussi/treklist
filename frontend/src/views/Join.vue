@@ -30,10 +30,6 @@
         </div>
       </div>
       <div class="field">
-        <label>gender <span class="optional">optional</span></label>
-        <input v-model="gender" placeholder="e.g. non-binary" />
-      </div>
-      <div class="field">
         <label>date of birth <span class="optional">optional — used for calorie estimates</span></label>
         <input v-model="birthday" type="date" />
       </div>
