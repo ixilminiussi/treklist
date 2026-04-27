@@ -66,28 +66,14 @@
                 class="td-status"
                 :class="{ mine: t.id === store.myTrekker?.id }"
               >
-                <StatusPicker
+                <StatusCell
                   v-if="t.id === store.myTrekker?.id"
-                  :item="entry.name"
                   :status="store.myStatuses[entry.name] ?? ''"
-                  :my-trekker-id="store.myTrekker?.id ?? ''"
-                  :trekker-colors="trekkerColors"
-                  :provision="provisionFor(entry.name, t.id)"
                   @change="onStatusChange(entry.name, $event)"
-                  @add-slot="changeSlots(entry.name, 1)"
-                  @remove-slot="changeSlots(entry.name, -1)"
-                  @claim="claimProvision"
-                  @unclaim="unclaimProvision"
                 />
-                <StatusBadge
-                  v-else
-                  :status="statusOf(t.id, entry.name)"
-                  :my-trekker-id="store.myTrekker?.id ?? ''"
-                  :trekker-colors="trekkerColors"
-                  :provision="provisionFor(entry.name, t.id)"
-                  @claim="claimProvision"
-                  @unclaim="unclaimProvision"
-                />
+                <div v-else class="other-status" :style="otherStyle(t.id, entry.name)">
+                  {{ otherLabel(t.id, entry.name) }}
+                </div>
               </td>
             </tr>
           </template>
@@ -142,8 +128,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useTrekStore } from '../stores/trek'
 import { useAuthStore } from '../stores/auth'
-import StatusPicker from '../components/StatusPicker.vue'
-import StatusBadge from '../components/StatusBadge.vue'
+import StatusCell from '../components/StatusCell.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -172,9 +157,23 @@ onMounted(async () => {
 
 const isCreator = computed(() => !!auth.user && store.trek?.creator_id === auth.user.id)
 const bagTabColor = computed(() => store.trekkers.find(t => t.id === bagTab.value)?.color ?? '#4f9cf9')
-const trekkerColors = computed(() =>
-  Object.fromEntries(store.trekkers.map(t => [t.id, t.color]))
-)
+
+const LABELS: Record<string, string> = {
+  need: 'Need it', got_it: 'Got it', shared: 'Shared', provided: 'Provided',
+}
+const COLORS: Record<string, { bg: string; border: string; text: string }> = {
+  need:     { bg: '#2a1a1a', border: '#c0392b', text: '#e74c3c' },
+  got_it:   { bg: '#1a2a1a', border: '#27ae60', text: '#4fcc8a' },
+  shared:   { bg: '#231a2e', border: '#8e44ad', text: '#c97ff9' },
+  provided: { bg: '#1a1f2e', border: '#2980b9', text: '#4f9cf9' },
+}
+
+function otherLabel(trekkerId: string, itemName: string) {
+  return LABELS[statusOf(trekkerId, itemName)] ?? ''
+}
+function otherStyle(trekkerId: string, itemName: string) {
+  return COLORS[statusOf(trekkerId, itemName)] ?? {}
+}
 
 // flat list of rows for both columns to iterate in sync
 const allRows = computed(() => {
@@ -194,9 +193,6 @@ function statusOf(trekkerId: string, itemName: string) {
   return store.statuses.find(s => s.trekker_id === trekkerId && s.item_name === itemName)?.status ?? ''
 }
 
-function provisionFor(itemName: string, trekkerId: string) {
-  return store.provisions.find(p => p.item_name === itemName && p.trekker_id === trekkerId) ?? null
-}
 
 function annotationsFor(itemName: string) {
   return store.annotations.filter(a => a.item_name === itemName)
@@ -209,10 +205,6 @@ function itemGrams(itemName: string) {
   return store.trekkerWeights.find(w => w.trekker_id === store.myTrekker?.id && w.item_name === itemName)?.custom_grams
     ?? store.defaultWeights[itemName]
     ?? 0
-}
-
-function myProvisionQty(itemName: string) {
-  return store.provisions.find(p => p.item_name === itemName && p.trekker_id === store.myTrekker?.id)?.quantity
 }
 
 function bagItems(trekkerId: string) {
@@ -229,31 +221,6 @@ function bagItems(trekkerId: string) {
 
 async function onStatusChange(itemName: string, status: string) {
   await store.setStatus(itemName, status)
-  if (status === 'provided' || status === 'shared') {
-    const existing = provisionFor(itemName, store.myTrekker?.id ?? '')
-    if (!existing) {
-      const { treksApi } = await import('../api/treks')
-      const res = await treksApi.upsertProvision(code, itemName, status, 1)
-      store.provisions.push({ id: res.provision_id, trekker_id: store.myTrekker!.id, item_name: itemName, type: status as any, quantity: 1, claims: [] })
-    }
-  } else {
-    const idx = store.provisions.findIndex(p => p.item_name === itemName && p.trekker_id === store.myTrekker?.id)
-    if (idx >= 0) store.provisions.splice(idx, 1)
-  }
-}
-
-async function changeSlots(itemName: string, delta: number) {
-  const existing = provisionFor(itemName, store.myTrekker?.id ?? '')
-  const currentQty = existing?.quantity ?? 1
-  const newQty = Math.max(1, Math.min(20, currentQty + delta))
-  if (newQty === currentQty) return
-  const { treksApi } = await import('../api/treks')
-  const status = store.myStatuses[itemName]
-  const type = status === 'shared' ? 'shared' : 'provided'
-  const res = await treksApi.upsertProvision(code, itemName, type, newQty)
-  const idx = store.provisions.findIndex(p => p.item_name === itemName && p.trekker_id === store.myTrekker?.id)
-  if (idx >= 0) store.provisions[idx].quantity = newQty
-  else store.provisions.push({ id: res.provision_id, trekker_id: store.myTrekker!.id, item_name: itemName, type, quantity: newQty, claims: [] })
 }
 
 function openAnnotation(itemName: string) { annotationItem.value = itemName }
@@ -437,12 +404,26 @@ function copyCode() { navigator.clipboard.writeText(store.trek?.code ?? '') }
 }
 
 .td-status {
-  padding: 0.5rem 0.75rem;
+  padding: 0;
   border-bottom: 1px solid #141620;
   border-left: 1px solid #141620;
   vertical-align: middle;
 }
 .td-status.mine { background: #0a0d1a; }
+
+.other-status {
+  width: 100%;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 14px 0.75rem;
+  width: calc(100% - 1.5rem);
+  border-radius: 6px;
+  border: 1px solid transparent;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
 
 /* add row */
 .add-row td { border-top: 1px solid #1e2030; }
