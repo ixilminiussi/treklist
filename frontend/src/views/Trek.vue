@@ -28,49 +28,59 @@
 
     <!-- checklist -->
     <div v-if="tab === 'checklist'" class="checklist-area">
-      <div class="checklist-columns">
-
-        <!-- names column -->
-        <div class="col col-names">
-          <div class="col-header">item</div>
+      <table class="checklist-table">
+        <thead>
+          <tr>
+            <th class="th-name">item</th>
+            <th
+              v-for="t in store.trekkers" :key="t.id"
+              class="th-trekker"
+              :class="{ mine: t.id === store.myTrekker?.id }"
+              :style="{ borderBottom: `3px solid ${t.color}` }"
+            >{{ t.display_name }}</th>
+          </tr>
+        </thead>
+        <tbody>
           <template v-for="entry in allRows" :key="entry.key">
-            <div v-if="entry.type === 'category'" class="category-label">{{ entry.name }}</div>
-            <div v-else-if="entry.type === 'custom-add'" class="add-custom-cell">
-              <input v-model="newItemName" placeholder="add an item…" @keyup.enter="addCustom" />
-              <button class="btn btn-ghost btn-sm" @click="addCustom">add</button>
-            </div>
-            <div v-else class="name-cell">
-              <span class="item-name">{{ entry.name }}</span>
-              <span v-if="itemGrams(entry.name)" class="item-grams">{{ itemGrams(entry.name) }}g</span>
-              <button class="ann-btn" @click="openAnnotation(entry.name)">
-                <span v-if="annotationsFor(entry.name).length" class="ann-dot" />💬
-              </button>
-            </div>
+            <tr v-if="entry.type === 'category'" class="category-row">
+              <td :colspan="1 + store.trekkers.length" class="category-label">{{ entry.name }}</td>
+            </tr>
+            <tr v-else-if="entry.type === 'custom-add'" class="add-row">
+              <td :colspan="1 + store.trekkers.length" class="add-custom-cell">
+                <input v-model="newItemName" placeholder="add an item…" @keyup.enter="addCustom" />
+                <button class="btn btn-ghost btn-sm" @click="addCustom">add</button>
+              </td>
+            </tr>
+            <tr v-else class="item-row">
+              <td class="td-name">
+                <div class="td-name-inner">
+                  <span class="item-name">{{ entry.name }}</span>
+                  <span v-if="itemGrams(entry.name)" class="item-grams">{{ itemGrams(entry.name) }}g</span>
+                  <button class="ann-btn" @click="openAnnotation(entry.name)">
+                    <span v-if="annotationsFor(entry.name).length" class="ann-dot" />💬
+                  </button>
+                </div>
+              </td>
+              <td
+                v-for="t in store.trekkers" :key="t.id"
+                class="td-status"
+                :class="{ mine: t.id === store.myTrekker?.id }"
+              >
+                <StatusPicker
+                  v-if="t.id === store.myTrekker?.id"
+                  :item="entry.name"
+                  :status="store.myStatuses[entry.name] ?? ''"
+                  :color="t.color"
+                  :quantity="myProvisionQty(entry.name)"
+                  @change="onStatusChange(entry.name, $event)"
+                  @quantity-change="onQuantityChange(entry.name, $event)"
+                />
+                <StatusBadge v-else :status="statusOf(t.id, entry.name)" :color="t.color" />
+              </td>
+            </tr>
           </template>
-        </div>
-
-        <!-- one column per trekker -->
-        <div v-for="t in store.trekkers" :key="t.id" class="col col-trekker" :class="{ mine: t.id === store.myTrekker?.id }">
-          <div class="col-header" :style="{ borderBottom: `3px solid ${t.color}` }">{{ t.display_name }}</div>
-          <template v-for="entry in allRows" :key="entry.key">
-            <div v-if="entry.type === 'category'" class="category-spacer" />
-            <div v-else-if="entry.type === 'custom-add'" class="add-custom-spacer" />
-            <div v-else class="status-cell">
-              <StatusPicker
-                v-if="t.id === store.myTrekker?.id"
-                :item="entry.name"
-                :status="store.myStatuses[entry.name] ?? ''"
-                :color="t.color"
-                :quantity="myProvisionQty(entry.name)"
-                @change="onStatusChange(entry.name, $event)"
-                @quantity-change="onQuantityChange(entry.name, $event)"
-              />
-              <StatusBadge v-else :status="statusOf(t.id, entry.name)" :color="t.color" />
-            </div>
-          </template>
-        </div>
-
-      </div>
+        </tbody>
+      </table>
     </div>
 
     <!-- bag view -->
@@ -322,60 +332,69 @@ function copyCode() { navigator.clipboard.writeText(store.trek?.code ?? '') }
 
 .header-actions { display: flex; gap: 0.5rem; align-items: center; margin-left: auto; }
 
-/* checklist columns layout */
+/* checklist table */
 .checklist-area { flex: 1; overflow: auto; min-height: 0; }
 
-.checklist-columns {
-  display: flex;
-  min-height: 100%;
+.checklist-table {
+  border-collapse: collapse;
+  table-layout: auto;
 }
 
-/* names column */
-.col { display: flex; flex-direction: column; }
-
-.col-names {
-  width: max-content;
-  flex-shrink: 0;
-  position: sticky;
-  left: 0;
-  z-index: 10;
+/* header */
+.th-name {
+  position: sticky; top: 0; left: 0; z-index: 20;
   background: #0f1117;
-  border-right: 1px solid #1e2030;
-}
-
-.col-trekker {
-  width: 300px;
-  flex-shrink: 0;
-  border-right: 1px solid #141620;
-}
-.col-trekker.mine { background: #0a0d1a; }
-
-.col-header {
-  height: 56px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 0.8rem; font-weight: 600;
-  border-bottom: 1px solid #1e2030;
-  padding: 0 0.75rem;
-  position: sticky; top: 0; background: inherit; z-index: 5;
-}
-.col-names .col-header {
-  justify-content: flex-end;
+  text-align: right;
+  white-space: nowrap;
+  padding: 0.6rem 0.5rem;
   font-size: 0.72rem; font-weight: 700;
   text-transform: uppercase; letter-spacing: 0.06em;
   color: #8b92a8;
+  border-bottom: 1px solid #1e2030;
 }
 
-/* rows */
-.name-cell {
-  min-height: 88px;
-  display: flex; align-items: center; justify-content: flex-end;
-  gap: 0.4rem;
-  padding: 0.5rem 0.5rem 0.5rem 0.5rem;
+.th-trekker {
+  position: sticky; top: 0; z-index: 10;
+  background: #0f1117;
+  width: 300px;
+  min-width: 300px;
+  text-align: center;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.85rem; font-weight: 600;
+  border-bottom: 1px solid #1e2030;
+}
+.th-trekker.mine { background: #0a0d1a; }
+
+/* category rows */
+.category-row td { background: #0f1117; }
+.category-label {
+  padding: 0.5rem 0.5rem 0.25rem;
+  font-size: 0.7rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.08em;
+  color: #8b92a8;
+  border-bottom: 1px solid #1a1d2e;
+}
+
+/* item rows */
+.item-row:hover .td-name { background: #141620; }
+
+.td-name {
+  position: sticky; left: 0; z-index: 5;
+  background: #0f1117;
+  white-space: nowrap;
+  text-align: right;
+  padding: 0.5rem 0.5rem;
   border-bottom: 1px solid #141620;
+  height: 88px;
 }
-.name-cell:hover { background: #141620; }
+.item-row:hover .td-name { background: #141620; }
 
-.item-name { font-size: 0.88rem; text-align: right; }
+.td-name-inner {
+  display: flex; align-items: center; justify-content: flex-end;
+  gap: 0.4rem; height: 100%;
+}
+
+.item-name { font-size: 0.88rem; }
 .item-grams { font-size: 0.7rem; color: #444; white-space: nowrap; }
 
 .ann-btn {
@@ -390,37 +409,21 @@ function copyCode() { navigator.clipboard.writeText(store.trek?.code ?? '') }
   width: 5px; height: 5px; border-radius: 50%; background: #f97f4f;
 }
 
-.status-cell {
-  min-height: 88px;
-  display: flex; align-items: center;
+.td-status {
   padding: 0.5rem 0.75rem;
   border-bottom: 1px solid #141620;
+  border-left: 1px solid #141620;
+  vertical-align: middle;
 }
+.td-status.mine { background: #0a0d1a; }
 
-.category-label {
-  padding: 0.5rem 0.5rem 0.25rem 0.5rem;
-  font-size: 0.7rem; font-weight: 700;
-  text-transform: uppercase; letter-spacing: 0.08em;
-  color: #8b92a8;
-  border-bottom: 1px solid #1a1d2e;
-  background: #0f1117;
-}
-.category-spacer {
-  min-height: 38px;
-  border-bottom: 1px solid #1a1d2e;
-  background: inherit;
-}
-
+/* add row */
+.add-row td { border-top: 1px solid #1e2030; }
 .add-custom-cell {
   display: flex; gap: 0.5rem;
   padding: 0.75rem 0.5rem;
-  border-top: 1px solid #1e2030;
 }
 .add-custom-cell input { flex: 1; min-width: 0; }
-.add-custom-spacer {
-  min-height: 54px;
-  border-top: 1px solid #1e2030;
-}
 
 /* bag view */
 .bag-area { flex: 1; overflow-y: auto; padding: 1.5rem; min-height: 0; }
