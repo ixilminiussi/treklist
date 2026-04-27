@@ -301,8 +301,8 @@ function copyCode() { navigator.clipboard.writeText(store.trek?.code ?? '') }
 .col { display: flex; flex-direction: column; }
 
 .col-names {
-  flex: 1;
-  min-width: 180px;
+  width: max-content;
+  flex-shrink: 0;
   position: sticky;
   left: 0;
   z-index: 10;
