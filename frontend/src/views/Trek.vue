@@ -369,8 +369,8 @@ function copyCode() { navigator.clipboard.writeText(store.trek?.code ?? '') }
 .name-cell {
   min-height: 88px;
   display: flex; align-items: center; justify-content: flex-end;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem 0.5rem 1rem;
+  gap: 0.4rem;
+  padding: 0.5rem 0.5rem 0.5rem 0.5rem;
   border-bottom: 1px solid #141620;
 }
 .name-cell:hover { background: #141620; }
@@ -398,7 +398,7 @@ function copyCode() { navigator.clipboard.writeText(store.trek?.code ?? '') }
 }
 
 .category-label {
-  padding: 0.5rem 0.75rem 0.25rem 1rem;
+  padding: 0.5rem 0.5rem 0.25rem 0.5rem;
   font-size: 0.7rem; font-weight: 700;
   text-transform: uppercase; letter-spacing: 0.08em;
   color: #8b92a8;
@@ -413,7 +413,7 @@ function copyCode() { navigator.clipboard.writeText(store.trek?.code ?? '') }
 
 .add-custom-cell {
   display: flex; gap: 0.5rem;
-  padding: 0.75rem 0.75rem;
+  padding: 0.75rem 0.5rem;
   border-top: 1px solid #1e2030;
 }
 .add-custom-cell input { flex: 1; min-width: 0; }
