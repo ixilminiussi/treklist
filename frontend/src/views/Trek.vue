@@ -311,14 +311,14 @@ function copyCode() { navigator.clipboard.writeText(store.trek?.code ?? '') }
 }
 
 .col-trekker {
-  width: 150px;
+  width: 300px;
   flex-shrink: 0;
   border-right: 1px solid #141620;
 }
 .col-trekker.mine { background: #0a0d1a; }
 
 .col-header {
-  height: 44px;
+  height: 56px;
   display: flex; align-items: center; justify-content: center;
   font-size: 0.8rem; font-weight: 600;
   border-bottom: 1px solid #1e2030;
@@ -334,10 +334,10 @@ function copyCode() { navigator.clipboard.writeText(store.trek?.code ?? '') }
 
 /* rows */
 .name-cell {
-  min-height: 44px;
+  min-height: 88px;
   display: flex; align-items: center; justify-content: flex-end;
   gap: 0.5rem;
-  padding: 0.35rem 0.75rem 0.35rem 1rem;
+  padding: 0.5rem 0.75rem 0.5rem 1rem;
   border-bottom: 1px solid #141620;
 }
 .name-cell:hover { background: #141620; }
@@ -358,9 +358,9 @@ function copyCode() { navigator.clipboard.writeText(store.trek?.code ?? '') }
 }
 
 .status-cell {
-  min-height: 44px;
+  min-height: 88px;
   display: flex; align-items: center;
-  padding: 0.35rem 0.4rem;
+  padding: 0.5rem 0.75rem;
   border-bottom: 1px solid #141620;
 }
 
@@ -373,8 +373,7 @@ function copyCode() { navigator.clipboard.writeText(store.trek?.code ?? '') }
   background: #0f1117;
 }
 .category-spacer {
-  /* same height as category-label */
-  min-height: 30px;
+  min-height: 38px;
   border-bottom: 1px solid #1a1d2e;
   background: inherit;
 }

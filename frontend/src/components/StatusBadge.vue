@@ -36,12 +36,12 @@ const badgeStyle = computed(() => {
 .badge {
   display: block;
   width: 100%;
-  height: 30px;
-  line-height: 30px;
+  height: 60px;
+  line-height: 60px;
   text-align: center;
-  border-radius: 5px;
+  border-radius: 6px;
   border: 1px solid;
-  font-size: 0.78rem;
+  font-size: 0.88rem;
   font-weight: 600;
 }
 .badge.empty { border-color: #1e2030; color: #333; }

@@ -101,10 +101,10 @@ function changeQty(delta: number) {
 
 .cycle-btn {
   flex: 1;
-  height: 30px;
-  border-radius: 5px;
+  height: 60px;
+  border-radius: 6px;
   border: 1px solid #2a2d3e;
-  font-size: 0.78rem;
+  font-size: 0.88rem;
   font-weight: 600;
   letter-spacing: 0.01em;
   transition: all 0.12s;
@@ -117,8 +117,8 @@ function changeQty(delta: number) {
 .cycle-btn.is-dont-need { text-decoration: line-through; }
 
 .qty-btn {
-  width: 22px;
-  height: 30px;
+  width: 32px;
+  height: 60px;
   border-radius: 4px;
   border: 1px solid #2a2d3e;
   background: #1a1d2e;
