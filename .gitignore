@@ -15,3 +15,4 @@ worker/.env
 
 # OS
 .DS_Store
+worker/node_modules/

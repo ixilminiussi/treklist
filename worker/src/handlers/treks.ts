@@ -19,8 +19,10 @@ function trekkerFromRow(row: any): any {
     color: row.color || row.u_color || '#4f9cf9',
     joined_at: row.joined_at,
     kicked_at: row.kicked_at ?? undefined,
-    weight_kg: row.weight_kg ?? undefined,
-    sex: row.sex ?? undefined,
+    weight_kg: row.weight_kg ?? row.u_weight_kg ?? undefined,
+    sex: row.sex ?? row.u_sex ?? undefined,
+    gender: row.gender ?? row.u_gender ?? undefined,
+    birthday: row.birthday ?? row.u_birthday ?? undefined,
   }
 }
 
@@ -53,7 +55,7 @@ export async function createTrek(c: Context<{ Bindings: Env }>) {
 export async function joinTrek(c: Context<{ Bindings: Env }>) {
   const code = c.req.param('code').toUpperCase()
   const body = await c.req.json<any>()
-  const { guest_name, user_id, color } = body
+  const { guest_name, user_id, color, weight_kg, sex, gender, birthday } = body
 
   const trek = await c.env.DB.prepare(`SELECT * FROM treks WHERE code = ?`).bind(code).first<any>()
   if (!trek) return c.json({ error: 'trek not found' }, 404)
@@ -62,9 +64,22 @@ export async function joinTrek(c: Context<{ Bindings: Env }>) {
   const trekkerID = crypto.randomUUID()
   const token = crypto.randomUUID()
   await c.env.DB.prepare(
-    `INSERT INTO trekkers (id, trek_code, user_id, guest_name, session_token, color, joined_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`
-  ).bind(trekkerID, code, user_id ?? null, guest_name ?? null, token, color ?? '#4f9cf9', new Date().toISOString()).run()
+    `INSERT INTO trekkers (id, trek_code, user_id, guest_name, session_token, color, joined_at, weight_kg, sex, gender, birthday)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).bind(trekkerID, code, user_id ?? null, guest_name ?? null, token, color ?? '#4f9cf9', new Date().toISOString(),
+    weight_kg ?? null, sex ?? null, gender ?? null, birthday ?? null).run()
+
+  // For registered users also update their profile with any supplied fields
+  if (user_id && (weight_kg != null || sex || gender || birthday)) {
+    const updates: string[] = []
+    const vals: any[] = []
+    if (weight_kg != null) { updates.push('weight_kg = ?'); vals.push(weight_kg) }
+    if (sex)               { updates.push('sex = ?');       vals.push(sex) }
+    if (gender)            { updates.push('gender = ?');    vals.push(gender) }
+    if (birthday)          { updates.push('birthday = ?');  vals.push(birthday) }
+    vals.push(user_id)
+    await c.env.DB.prepare(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`).bind(...vals).run()
+  }
 
   return c.json({
     trek,
@@ -79,7 +94,7 @@ export async function getTrek(c: Context<{ Bindings: Env }>) {
   if (!trek) return c.json({ error: 'not found' }, 404)
 
   const { results: trekkers } = await c.env.DB.prepare(
-    `SELECT t.*, u.username, u.weight_kg, u.sex, u.color as u_color
+    `SELECT t.*, u.username, u.weight_kg as u_weight_kg, u.sex as u_sex, u.gender as u_gender, u.birthday as u_birthday, u.color as u_color
      FROM trekkers t LEFT JOIN users u ON t.user_id = u.id
      WHERE t.trek_code = ? AND t.kicked_at IS NULL`
   ).bind(code).all()
