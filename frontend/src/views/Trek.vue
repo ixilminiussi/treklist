@@ -28,73 +28,48 @@
 
     <!-- checklist -->
     <div v-if="tab === 'checklist'" class="checklist-area">
-      <div class="checklist-grid" :style="gridStyle">
+      <div class="checklist-columns">
 
-        <!-- header row -->
-        <div class="cell header-name">item</div>
-        <div class="cell header-note"></div>
-        <div
-          v-for="t in store.trekkers" :key="t.id"
-          class="cell header-trekker"
-          :style="{ borderBottom: `3px solid ${t.color}` }"
-        >{{ t.display_name }}</div>
-
-        <template v-for="entry in store.filteredChecklist()" :key="entry.name">
-          <!-- category row spans all columns -->
-          <div v-if="entry.type === 'category'" class="category-row" :style="{ gridColumn: `1 / ${2 + 1 + store.trekkers.length + 1}` }">
-            {{ entry.name }}
-          </div>
-
-          <!-- item row -->
-          <template v-else>
-            <div class="cell item-name-cell">
+        <!-- names column -->
+        <div class="col col-names">
+          <div class="col-header">item</div>
+          <template v-for="entry in allRows" :key="entry.key">
+            <div v-if="entry.type === 'category'" class="category-label">{{ entry.name }}</div>
+            <div v-else-if="entry.type === 'custom-add'" class="add-custom-cell">
+              <input v-model="newItemName" placeholder="add an item…" @keyup.enter="addCustom" />
+              <button class="btn btn-ghost btn-sm" @click="addCustom">add</button>
+            </div>
+            <div v-else class="name-cell">
               <span class="item-name">{{ entry.name }}</span>
               <span v-if="itemGrams(entry.name)" class="item-grams">{{ itemGrams(entry.name) }}g</span>
-            </div>
-            <div class="cell note-cell">
               <button class="ann-btn" @click="openAnnotation(entry.name)">
-                <span v-if="annotationsFor(entry.name).length" class="ann-dot" />
-                💬
+                <span v-if="annotationsFor(entry.name).length" class="ann-dot" />💬
               </button>
             </div>
-            <div v-for="t in store.trekkers" :key="t.id" class="cell status-cell" :class="{ mine: t.id === store.myTrekker?.id }">
-              <template v-if="t.id === store.myTrekker?.id">
-                <StatusPicker
-                  :item="entry.name"
-                  :status="store.myStatuses[entry.name] ?? ''"
-                  :color="t.color"
-                  :quantity="myProvisionQty(entry.name)"
-                  @change="onStatusChange(entry.name, $event)"
-                  @quantity-change="onQuantityChange(entry.name, $event)"
-                />
-              </template>
-              <template v-else>
-                <StatusBadge :status="statusOf(t.id, entry.name)" :color="t.color" />
-              </template>
+          </template>
+        </div>
+
+        <!-- one column per trekker -->
+        <div v-for="t in store.trekkers" :key="t.id" class="col col-trekker" :class="{ mine: t.id === store.myTrekker?.id }">
+          <div class="col-header" :style="{ borderBottom: `3px solid ${t.color}` }">{{ t.display_name }}</div>
+          <template v-for="entry in allRows" :key="entry.key">
+            <div v-if="entry.type === 'category'" class="category-spacer" />
+            <div v-else-if="entry.type === 'custom-add'" class="add-custom-spacer" />
+            <div v-else class="status-cell">
+              <StatusPicker
+                v-if="t.id === store.myTrekker?.id"
+                :item="entry.name"
+                :status="store.myStatuses[entry.name] ?? ''"
+                :color="t.color"
+                :quantity="myProvisionQty(entry.name)"
+                @change="onStatusChange(entry.name, $event)"
+                @quantity-change="onQuantityChange(entry.name, $event)"
+              />
+              <StatusBadge v-else :status="statusOf(t.id, entry.name)" :color="t.color" />
             </div>
           </template>
-        </template>
-
-        <!-- custom items -->
-        <div class="category-row" :style="{ gridColumn: `1 / ${2 + 1 + store.trekkers.length + 1}` }">Custom</div>
-        <template v-for="ci in store.customItems" :key="ci.id">
-          <div class="cell item-name-cell"><span class="item-name">{{ ci.name }}</span></div>
-          <div class="cell note-cell"></div>
-          <div v-for="t in store.trekkers" :key="t.id" class="cell status-cell" :class="{ mine: t.id === store.myTrekker?.id }">
-            <template v-if="t.id === store.myTrekker?.id">
-              <StatusPicker :item="ci.name" :status="store.myStatuses[ci.name] ?? ''" :color="t.color" :quantity="myProvisionQty(ci.name)" @change="onStatusChange(ci.name, $event)" @quantity-change="onQuantityChange(ci.name, $event)" />
-            </template>
-            <template v-else>
-              <StatusBadge :status="statusOf(t.id, ci.name)" :color="t.color" />
-            </template>
-          </div>
-        </template>
-
-        <!-- add custom row -->
-        <div class="cell add-custom-cell" :style="{ gridColumn: `1 / ${2 + 1 + store.trekkers.length + 1}` }">
-          <input v-model="newItemName" placeholder="add an item…" @keyup.enter="addCustom" />
-          <button class="btn btn-ghost btn-sm" @click="addCustom">add</button>
         </div>
+
       </div>
     </div>
 
@@ -177,10 +152,19 @@ onMounted(async () => {
 const isCreator = computed(() => !!auth.user && store.trek?.creator_id === auth.user.id)
 const bagTabColor = computed(() => store.trekkers.find(t => t.id === bagTab.value)?.color ?? '#4f9cf9')
 
-// grid-template-columns: name | note | ...one per trekker
-const gridStyle = computed(() => ({
-  gridTemplateColumns: `1fr 32px ${store.trekkers.map(() => '140px').join(' ')}`,
-}))
+// flat list of rows for both columns to iterate in sync
+const allRows = computed(() => {
+  const rows: { key: string; type: string; name: string }[] = []
+  for (const entry of store.filteredChecklist()) {
+    rows.push({ key: entry.name, type: entry.type, name: entry.name })
+  }
+  rows.push({ key: '__custom_cat', type: 'category', name: 'Custom' })
+  for (const ci of store.customItems) {
+    rows.push({ key: ci.id, type: 'item', name: ci.name })
+  }
+  rows.push({ key: '__add', type: 'custom-add', name: '' })
+  return rows
+})
 
 function statusOf(trekkerId: string, itemName: string) {
   return store.statuses.find(s => s.trekker_id === trekkerId && s.item_name === itemName)?.status ?? ''
@@ -305,100 +289,106 @@ function copyCode() { navigator.clipboard.writeText(store.trek?.code ?? '') }
 .kick-btn { padding: 0 0.3rem; font-size: 0.7rem; }
 .sidebar-actions { display: flex; flex-direction: column; gap: 0.5rem; margin-top: auto; }
 
-/* checklist grid */
+/* checklist columns layout */
 .checklist-area { flex: 1; overflow: auto; }
 
-.checklist-grid {
-  display: grid;
-  min-width: max-content;
-}
-
-/* header */
-.header-name {
-  position: sticky; left: 0; top: 0; z-index: 20;
-  background: #0f1117;
-  text-align: right;
-  font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
-  letter-spacing: 0.06em; color: #8b92a8;
-  padding: 0.75rem 0.75rem 0.75rem 1.5rem;
-  border-bottom: 1px solid #1e2030;
-}
-.header-note {
-  position: sticky; top: 0; z-index: 19;
-  background: #0f1117;
-  border-bottom: 1px solid #1e2030;
-}
-.header-trekker {
-  position: sticky; top: 0; z-index: 19;
-  background: #0f1117;
-  font-size: 0.8rem; font-weight: 600;
-  text-align: center;
-  padding: 0.75rem 0.5rem 0.5rem;
-  border-bottom: 1px solid #1e2030;
-}
-
-/* category */
-.category-row {
-  background: #0f1117;
-  position: sticky; left: 0;
-  font-size: 0.7rem; font-weight: 700;
-  text-transform: uppercase; letter-spacing: 0.08em;
-  color: #8b92a8;
-  padding: 0.6rem 0.75rem 0.3rem 1.5rem;
-  border-bottom: 1px solid #1a1d2e;
-  margin-top: 0.25rem;
-}
-
-/* item cells */
-.cell {
+.checklist-columns {
   display: flex;
-  align-items: center;
-  padding: 0.35rem 0.5rem;
-  border-bottom: 1px solid #141620;
-  min-height: 48px;
+  min-height: 100%;
 }
 
-.item-name-cell {
-  position: sticky; left: 0;
-  background: #0f1117;
+/* names column */
+.col { display: flex; flex-direction: column; }
+
+.col-names {
+  flex: 1;
+  min-width: 180px;
+  position: sticky;
+  left: 0;
   z-index: 10;
-  justify-content: flex-end;
-  gap: 0.5rem;
-  padding-right: 0.75rem;
-  padding-left: 1.5rem;
+  background: #0f1117;
+  border-right: 1px solid #1e2030;
 }
-.checklist-grid:has(.item-row:hover) .item-name-cell { background: #141620; }
+
+.col-trekker {
+  width: 150px;
+  flex-shrink: 0;
+  border-right: 1px solid #141620;
+}
+.col-trekker.mine { background: #0a0d1a; }
+
+.col-header {
+  height: 44px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.8rem; font-weight: 600;
+  border-bottom: 1px solid #1e2030;
+  padding: 0 0.75rem;
+  position: sticky; top: 0; background: inherit; z-index: 5;
+}
+.col-names .col-header {
+  justify-content: flex-end;
+  font-size: 0.72rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.06em;
+  color: #8b92a8;
+}
+
+/* rows */
+.name-cell {
+  min-height: 44px;
+  display: flex; align-items: center; justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0.35rem 0.75rem 0.35rem 1rem;
+  border-bottom: 1px solid #141620;
+}
+.name-cell:hover { background: #141620; }
 
 .item-name { font-size: 0.88rem; text-align: right; }
-.item-grams { font-size: 0.7rem; color: #555; white-space: nowrap; }
+.item-grams { font-size: 0.7rem; color: #444; white-space: nowrap; }
 
-.note-cell { justify-content: center; padding: 0 0; }
 .ann-btn {
   background: none; border: none; cursor: pointer;
-  font-size: 0.8rem; position: relative;
-  opacity: 0.4; transition: opacity 0.12s;
-  padding: 0.2rem;
+  font-size: 0.75rem; position: relative;
+  opacity: 0.3; transition: opacity 0.12s; padding: 0.15rem;
+  flex-shrink: 0;
 }
 .ann-btn:hover { opacity: 1; }
 .ann-dot {
   position: absolute; top: 0; right: 0;
-  width: 6px; height: 6px; border-radius: 50%;
-  background: #f97f4f;
+  width: 5px; height: 5px; border-radius: 50%; background: #f97f4f;
 }
 
 .status-cell {
-  justify-content: center;
+  min-height: 44px;
+  display: flex; align-items: center;
   padding: 0.35rem 0.4rem;
+  border-bottom: 1px solid #141620;
 }
-.status-cell.mine { background: #0d1020; }
 
-/* add custom */
+.category-label {
+  padding: 0.5rem 0.75rem 0.25rem 1rem;
+  font-size: 0.7rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.08em;
+  color: #8b92a8;
+  border-bottom: 1px solid #1a1d2e;
+  background: #0f1117;
+}
+.category-spacer {
+  /* same height as category-label */
+  min-height: 30px;
+  border-bottom: 1px solid #1a1d2e;
+  background: inherit;
+}
+
 .add-custom-cell {
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
+  display: flex; gap: 0.5rem;
+  padding: 0.75rem 0.75rem;
   border-top: 1px solid #1e2030;
 }
-.add-custom-cell input { flex: 1; }
+.add-custom-cell input { flex: 1; min-width: 0; }
+.add-custom-spacer {
+  min-height: 54px;
+  border-top: 1px solid #1e2030;
+}
 
 /* bag view */
 .bag-area { flex: 1; overflow-y: auto; padding: 1.5rem; }
