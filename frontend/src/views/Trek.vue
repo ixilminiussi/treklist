@@ -70,22 +70,24 @@
                   v-if="t.id === store.myTrekker?.id"
                   :item="entry.name"
                   :status="store.myStatuses[entry.name] ?? ''"
-                  :color="t.color"
-                  :quantity="myProvisionQty(entry.name)"
+                  :my-trekker-id="store.myTrekker?.id ?? ''"
+                  :trekker-colors="trekkerColors"
+                  :provision="provisionFor(entry.name, t.id)"
                   @change="onStatusChange(entry.name, $event)"
-                  @quantity-change="onQuantityChange(entry.name, $event)"
+                  @add-slot="changeSlots(entry.name, 1)"
+                  @remove-slot="changeSlots(entry.name, -1)"
+                  @claim="claimProvision"
+                  @unclaim="unclaimProvision"
                 />
-                <template v-else>
-                  <ProvisionDisplay
-                    v-if="provisionFor(entry.name, t.id)"
-                    :provision="provisionFor(entry.name, t.id)!"
-                    :my-trekker-id="store.myTrekker?.id ?? ''"
-                    :color="t.color"
-                    @claim="claimProvision"
-                    @unclaim="unclaimProvision"
-                  />
-                  <StatusBadge v-else :status="statusOf(t.id, entry.name)" :color="t.color" />
-                </template>
+                <StatusBadge
+                  v-else
+                  :status="statusOf(t.id, entry.name)"
+                  :my-trekker-id="store.myTrekker?.id ?? ''"
+                  :trekker-colors="trekkerColors"
+                  :provision="provisionFor(entry.name, t.id)"
+                  @claim="claimProvision"
+                  @unclaim="unclaimProvision"
+                />
               </td>
             </tr>
           </template>
@@ -142,7 +144,6 @@ import { useTrekStore } from '../stores/trek'
 import { useAuthStore } from '../stores/auth'
 import StatusPicker from '../components/StatusPicker.vue'
 import StatusBadge from '../components/StatusBadge.vue'
-import ProvisionDisplay from '../components/ProvisionDisplay.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -171,6 +172,9 @@ onMounted(async () => {
 
 const isCreator = computed(() => !!auth.user && store.trek?.creator_id === auth.user.id)
 const bagTabColor = computed(() => store.trekkers.find(t => t.id === bagTab.value)?.color ?? '#4f9cf9')
+const trekkerColors = computed(() =>
+  Object.fromEntries(store.trekkers.map(t => [t.id, t.color]))
+)
 
 // flat list of rows for both columns to iterate in sync
 const allRows = computed(() => {
@@ -225,23 +229,31 @@ function bagItems(trekkerId: string) {
 
 async function onStatusChange(itemName: string, status: string) {
   await store.setStatus(itemName, status)
-  // If cycling away from provided/shared, remove the provision
-  if (status !== 'provided' && status !== 'shared') {
-    const existing = store.provisions.find(p => p.item_name === itemName && p.trekker_id === store.myTrekker?.id)
-    if (existing) {
-      store.provisions.splice(store.provisions.indexOf(existing), 1)
+  if (status === 'provided' || status === 'shared') {
+    const existing = provisionFor(itemName, store.myTrekker?.id ?? '')
+    if (!existing) {
+      const { treksApi } = await import('../api/treks')
+      const res = await treksApi.upsertProvision(code, itemName, status, 1)
+      store.provisions.push({ id: res.provision_id, trekker_id: store.myTrekker!.id, item_name: itemName, type: status as any, quantity: 1, claims: [] })
     }
+  } else {
+    const idx = store.provisions.findIndex(p => p.item_name === itemName && p.trekker_id === store.myTrekker?.id)
+    if (idx >= 0) store.provisions.splice(idx, 1)
   }
 }
 
-async function onQuantityChange(itemName: string, quantity: number) {
+async function changeSlots(itemName: string, delta: number) {
+  const existing = provisionFor(itemName, store.myTrekker?.id ?? '')
+  const currentQty = existing?.quantity ?? 1
+  const newQty = Math.max(1, Math.min(20, currentQty + delta))
+  if (newQty === currentQty) return
   const { treksApi } = await import('../api/treks')
   const status = store.myStatuses[itemName]
   const type = status === 'shared' ? 'shared' : 'provided'
-  const res = await treksApi.upsertProvision(code, itemName, type, quantity)
+  const res = await treksApi.upsertProvision(code, itemName, type, newQty)
   const idx = store.provisions.findIndex(p => p.item_name === itemName && p.trekker_id === store.myTrekker?.id)
-  if (idx >= 0) store.provisions[idx].quantity = quantity
-  else store.provisions.push({ id: res.provision_id, trekker_id: store.myTrekker!.id, item_name: itemName, type, quantity, claims: [] })
+  if (idx >= 0) store.provisions[idx].quantity = newQty
+  else store.provisions.push({ id: res.provision_id, trekker_id: store.myTrekker!.id, item_name: itemName, type, quantity: newQty, claims: [] })
 }
 
 function openAnnotation(itemName: string) { annotationItem.value = itemName }
