@@ -3,28 +3,28 @@
   <div v-else-if="!store.trek" class="center-msg">trek not found</div>
   <div v-else class="trek-layout">
 
-    <!-- sidebar -->
-    <aside class="sidebar">
-      <div class="trek-header">
-        <div class="trek-name">{{ store.trek.name }}</div>
-        <div class="trek-code" @click="copyCode">{{ store.trek.code }}</div>
-        <div class="trek-meta">{{ store.trek.trek_type }} · {{ store.trek.camping || 'any camp' }} · {{ store.trek.weather }}</div>
+    <!-- top header -->
+    <header class="trek-header">
+      <div class="trek-info">
+        <span class="trek-name">{{ store.trek.name }}</span>
+        <span class="trek-meta">{{ store.trek.trek_type }} · {{ store.trek.camping || 'any camp' }} · {{ store.trek.weather }}</span>
       </div>
-
-      <div class="trekkers-list">
-        <div v-for="t in store.trekkers" :key="t.id" class="trekker-row" :class="{ me: t.id === store.myTrekker?.id }">
+      <div class="trek-code" @click="copyCode" title="click to copy">{{ store.trek.code }}</div>
+      <div class="trekkers-pills">
+        <div v-for="t in store.trekkers" :key="t.id" class="trekker-pill" :class="{ me: t.id === store.myTrekker?.id }">
           <span class="trekker-dot" :style="{ background: t.color }" />
-          <span class="trekker-name">{{ t.display_name }}</span>
+          <span>{{ t.display_name }}</span>
           <span class="trekker-weight">{{ (store.bagWeight(t.id) / 1000).toFixed(1) }}kg</span>
-          <button v-if="isCreator && t.id !== store.myTrekker?.id" class="btn btn-ghost btn-sm kick-btn" @click="kick(t.id)">✕</button>
+          <button v-if="isCreator && t.id !== store.myTrekker?.id" class="kick-btn" @click="kick(t.id)">✕</button>
         </div>
       </div>
-
-      <div class="sidebar-actions">
-        <button class="btn btn-ghost" @click="tab = 'bag'">bag view</button>
+      <div class="header-actions">
+        <button class="btn btn-ghost btn-sm" @click="tab = tab === 'bag' ? 'checklist' : 'bag'">
+          {{ tab === 'bag' ? '← checklist' : 'bag view' }}
+        </button>
         <button v-if="isCreator" class="btn btn-danger btn-sm" @click="closeTrek">close trek</button>
       </div>
-    </aside>
+    </header>
 
     <!-- checklist -->
     <div v-if="tab === 'checklist'" class="checklist-area">
@@ -75,8 +75,7 @@
 
     <!-- bag view -->
     <div v-else-if="tab === 'bag'" class="bag-area">
-      <div class="bag-header">
-        <button class="btn btn-ghost btn-sm" @click="tab = 'checklist'">← back</button>
+      <div class="bag-title">
         <h2>bag weights</h2>
         <div class="wip-badge">WIP · animated bag coming soon</div>
       </div>
@@ -267,30 +266,64 @@ function copyCode() { navigator.clipboard.writeText(store.trek?.code ?? '') }
 <style scoped>
 .center-msg { text-align: center; padding: 4rem; color: #8b92a8; }
 
-.trek-layout { display: flex; height: calc(100vh - 56px); overflow: hidden; }
-
-/* sidebar */
-.sidebar {
-  width: 220px; flex-shrink: 0;
-  border-right: 1px solid #1e2030;
-  display: flex; flex-direction: column;
-  padding: 1.25rem 1rem; gap: 1rem;
-  overflow-y: auto;
+.trek-layout {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 56px);
+  overflow: hidden;
 }
-.trek-name { font-weight: 700; font-size: 1rem; }
-.trek-code { font-family: monospace; font-size: 1.4rem; letter-spacing: 0.2em; color: #4f9cf9; cursor: pointer; user-select: all; }
-.trek-meta { font-size: 0.75rem; color: #8b92a8; }
-.trekkers-list { display: flex; flex-direction: column; gap: 0.5rem; }
-.trekker-row { display: flex; align-items: center; gap: 0.5rem; padding: 0.35rem 0.5rem; border-radius: 6px; font-size: 0.85rem; }
-.trekker-row.me { background: #1a1d2e; }
-.trekker-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.trekker-name { flex: 1; }
-.trekker-weight { font-size: 0.75rem; color: #8b92a8; }
-.kick-btn { padding: 0 0.3rem; font-size: 0.7rem; }
-.sidebar-actions { display: flex; flex-direction: column; gap: 0.5rem; margin-top: auto; }
+
+/* top header */
+.trek-header {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 0.6rem 1.25rem;
+  border-bottom: 1px solid #1e2030;
+  background: #0f1117;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.trek-info { display: flex; flex-direction: column; gap: 0.1rem; }
+.trek-name { font-weight: 700; font-size: 0.95rem; }
+.trek-meta { font-size: 0.72rem; color: #8b92a8; }
+
+.trek-code {
+  font-family: monospace;
+  font-size: 1.1rem;
+  letter-spacing: 0.2em;
+  color: #4f9cf9;
+  cursor: pointer;
+  user-select: all;
+  flex-shrink: 0;
+}
+
+.trekkers-pills {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  flex: 1;
+}
+.trekker-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 20px;
+  border: 1px solid #2a2d3e;
+  font-size: 0.8rem;
+}
+.trekker-pill.me { background: #1a1d2e; border-color: #3a3f5a; }
+.trekker-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.trekker-weight { font-size: 0.72rem; color: #8b92a8; }
+.kick-btn { background: none; border: none; color: #8b92a8; cursor: pointer; font-size: 0.7rem; padding: 0 0.1rem; line-height: 1; }
+.kick-btn:hover { color: #e05252; }
+
+.header-actions { display: flex; gap: 0.5rem; align-items: center; margin-left: auto; }
 
 /* checklist columns layout */
-.checklist-area { flex: 1; overflow: auto; }
+.checklist-area { flex: 1; overflow: auto; min-height: 0; }
 
 .checklist-columns {
   display: flex;
@@ -390,9 +423,9 @@ function copyCode() { navigator.clipboard.writeText(store.trek?.code ?? '') }
 }
 
 /* bag view */
-.bag-area { flex: 1; overflow-y: auto; padding: 1.5rem; }
-.bag-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
-.bag-header h2 { font-size: 1.1rem; font-weight: 700; }
+.bag-area { flex: 1; overflow-y: auto; padding: 1.5rem; min-height: 0; }
+.bag-title { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+.bag-title h2 { font-size: 1.1rem; font-weight: 700; }
 .wip-badge { font-size: 0.75rem; color: #f9cf4f; background: #2a2200; border: 1px solid #f9cf4f44; border-radius: 4px; padding: 0.2rem 0.5rem; }
 .trekker-tabs { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
 .trekker-tab { background: transparent; border: 1px solid #2a2d3e; border-radius: 20px; padding: 0.35rem 0.85rem; font-size: 0.8rem; color: #8b92a8; cursor: pointer; transition: all 0.15s; }
