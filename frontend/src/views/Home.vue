@@ -62,6 +62,10 @@
           <div class="ping" :class="{ live: !loadingTreks }">
             <span class="ping-dot" />{{ loadingTreks ? 'loading…' : 'live' }}
           </div>
+          <div class="lobby-actions">
+            <button class="btn btn-primary btn-sm" @click="openPanel('create')">+ new trek</button>
+            <button class="btn btn-ghost btn-sm" @click="openPanel('join')">join by code</button>
+          </div>
         </div>
 
         <div class="trek-area">
@@ -104,10 +108,6 @@
           </div>
         </div>
 
-        <div class="lobby-footer">
-          <button class="btn btn-primary" @click="openPanel('create')">+ new trek</button>
-          <button class="btn btn-ghost" @click="openPanel('join')">join by code</button>
-        </div>
       </main>
     </template>
 
@@ -369,8 +369,9 @@ async function joinByCode() {
 
 .lobby-header {
   display: flex; align-items: center; gap: 0.75rem;
-  flex-shrink: 0;
+  flex-shrink: 0; flex-wrap: wrap;
 }
+.lobby-actions { display: flex; gap: 0.5rem; margin-left: auto; }
 .lobby-header h1 { font-size: 1.3rem; font-weight: 800; }
 .ping {
   display: flex; align-items: center; gap: 0.3rem;
@@ -442,11 +443,6 @@ async function joinByCode() {
 .enter-arrow { color: #555e78; font-size: 1rem; flex-shrink: 0; transition: color 0.15s, transform 0.15s; }
 .trek-row:hover .enter-arrow { color: #e8eaf0; transform: translateX(3px); }
 
-.lobby-footer {
-  display: flex; gap: 0.6rem;
-  border-top: 1px solid #1e2030; padding-top: 0.85rem;
-  flex-shrink: 0;
-}
 
 /* ── Guest hero ─────────────────────────────────────────── */
 .home > .hero { margin: auto; text-align: center; max-width: 480px; }
