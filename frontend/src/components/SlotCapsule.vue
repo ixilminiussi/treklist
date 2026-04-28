@@ -1,11 +1,5 @@
 <template>
   <div class="capsule-wrap" :class="{ 'is-owner': isOwner }">
-    <!-- +/- above, hover-only, owner-only -->
-    <div v-if="isOwner" class="slot-controls">
-      <button class="ctrl-btn" @click.stop="$emit('removeSlot')">−</button>
-      <button class="ctrl-btn" @click.stop="$emit('addSlot')">+</button>
-    </div>
-
     <div
       class="capsule"
       :class="{ provided: provision.type === 'provided', shared: provision.type === 'shared' }"
@@ -28,6 +22,12 @@
         @dragstart="onDragStart(n, $event)"
         @dragend="onDragEnd"
       />
+    </div>
+
+    <!-- +/- on the right, hover-only, owner-only -->
+    <div v-if="isOwner" class="slot-controls">
+      <button class="ctrl-btn" @click.stop="$emit('addSlot')">+</button>
+      <button class="ctrl-btn" @click.stop="$emit('removeSlot')">−</button>
     </div>
   </div>
 </template>
@@ -104,21 +104,21 @@ function onDrop(e: DragEvent) {
 <style scoped>
 .capsule-wrap {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 0px;
+  gap: 4px;
   width: 100%;
   position: relative;
 }
 
-/* +/- controls — hidden, shown on hover of parent cell */
+/* +/- controls — hidden, shown on hover, on the right side */
 .slot-controls {
   display: flex;
-  gap: 4px;
+  flex-direction: column;
+  gap: 3px;
   opacity: 0;
   transition: opacity 0.15s;
   pointer-events: none;
-  margin-bottom: 4px;
 }
 .capsule-wrap.is-owner:hover .slot-controls {
   opacity: 1;
@@ -156,7 +156,7 @@ function onDrop(e: DragEvent) {
 /* slots */
 .slot {
   width: 28px; height: 28px;
-  border-radius: 50%;
+  border-radius: 8px;
   border: 2px solid #2a2d3e;
   background: transparent;
   cursor: pointer;

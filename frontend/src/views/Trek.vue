@@ -169,7 +169,15 @@ const COLORS: Record<string, { bg: string; border: string; text: string }> = {
 }
 
 function otherLabel(trekkerId: string, itemName: string) {
-  return LABELS[statusOf(trekkerId, itemName)] ?? ''
+  const status = statusOf(trekkerId, itemName)
+  if (status === 'provided') {
+    const provision = store.provisions.find(p => p.item_name === itemName && p.trekker_id === trekkerId)
+    if (provision && provision.quantity > 0) {
+      const name = store.trekkerMap[trekkerId]?.display_name
+      return name ? `${name}'s` : 'Provided'
+    }
+  }
+  return LABELS[status] ?? ''
 }
 function otherStyle(trekkerId: string, itemName: string) {
   return COLORS[statusOf(trekkerId, itemName)] ?? {}

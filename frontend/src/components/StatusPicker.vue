@@ -1,6 +1,6 @@
 <template>
   <SlotCapsule
-    v-if="provision && (status === 'provided' || status === 'shared')"
+    v-if="provision && provision.quantity > 0 && (status === 'provided' || status === 'shared')"
     :provision="provision"
     :trekker-colors="trekkerColors"
     :my-trekker-id="myTrekkerId"
