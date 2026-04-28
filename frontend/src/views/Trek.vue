@@ -66,14 +66,28 @@
                 class="td-status"
                 :class="{ mine: t.id === store.myTrekker?.id }"
               >
-                <StatusCell
+                <StatusPicker
                   v-if="t.id === store.myTrekker?.id"
+                  :item="entry.name"
                   :status="store.myStatuses[entry.name] ?? ''"
+                  :my-trekker-id="store.myTrekker!.id"
+                  :trekker-colors="trekkerColors"
+                  :provision="myProvision(entry.name)"
                   @change="onStatusChange(entry.name, $event)"
+                  @add-slot="onAddSlot(entry.name)"
+                  @remove-slot="onRemoveSlot(entry.name)"
+                  @claim="onClaim"
+                  @unclaim="onUnclaim"
                 />
-                <div v-else class="other-status" :style="otherStyle(t.id, entry.name)">
-                  {{ otherLabel(t.id, entry.name) }}
-                </div>
+                <StatusBadge
+                  v-else
+                  :status="statusOf(t.id, entry.name)"
+                  :my-trekker-id="t.id"
+                  :trekker-colors="trekkerColors"
+                  :provision="provisionFor(t.id, entry.name)"
+                  @claim="onClaim"
+                  @unclaim="onUnclaim"
+                />
               </td>
             </tr>
           </template>
@@ -128,7 +142,8 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useTrekStore } from '../stores/trek'
 import { useAuthStore } from '../stores/auth'
-import StatusCell from '../components/StatusCell.vue'
+import StatusPicker from '../components/StatusPicker.vue'
+import StatusBadge from '../components/StatusBadge.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -157,6 +172,20 @@ onMounted(async () => {
 
 const isCreator = computed(() => !!auth.user && store.trek?.creator_id === auth.user.id)
 const bagTabColor = computed(() => store.trekkers.find(t => t.id === bagTab.value)?.color ?? '#4f9cf9')
+const trekkerColors = computed(() =>
+  Object.fromEntries(store.trekkers.map(t => [t.id, t.color]))
+)
+
+function myProvision(itemName: string) {
+  return store.provisions.find(
+    p => p.item_name === itemName && p.trekker_id === store.myTrekker?.id
+  ) ?? null
+}
+function provisionFor(trekkerId: string, itemName: string) {
+  return store.provisions.find(
+    p => p.item_name === itemName && p.trekker_id === trekkerId
+  ) ?? null
+}
 
 const LABELS: Record<string, string> = {
   need: 'Need it', got_it: 'Got it', shared: 'Shared', provided: 'Provided',
@@ -229,6 +258,41 @@ function bagItems(trekkerId: string) {
 
 async function onStatusChange(itemName: string, status: string) {
   await store.setStatus(itemName, status)
+  // when switching to provided/shared with no provision yet, create one with 1 slot
+  if ((status === 'provided' || status === 'shared') && !myProvision(itemName)) {
+    const { treksApi } = await import('../api/treks')
+    const res = await treksApi.upsertProvision(code, itemName, status, 1)
+    store.provisions.push({ id: res.provision_id, trekker_id: res.trekker_id, item_name: res.item_name, type: res.type, quantity: res.quantity, claims: [] })
+  }
+}
+
+async function onAddSlot(itemName: string) {
+  const p = myProvision(itemName)
+  if (!p) return
+  const { treksApi } = await import('../api/treks')
+  const res = await treksApi.upsertProvision(code, itemName, p.type, p.quantity + 1)
+  const idx = store.provisions.findIndex(x => x.id === p.id)
+  if (idx >= 0) store.provisions[idx] = { ...store.provisions[idx], quantity: res.quantity }
+}
+
+async function onRemoveSlot(itemName: string) {
+  const p = myProvision(itemName)
+  if (!p) return
+  const { treksApi } = await import('../api/treks')
+  const newQty = Math.max(0, p.quantity - 1)
+  const res = await treksApi.upsertProvision(code, itemName, p.type, newQty)
+  const idx = store.provisions.findIndex(x => x.id === p.id)
+  if (idx >= 0) store.provisions[idx] = { ...store.provisions[idx], quantity: res.quantity }
+}
+
+async function onClaim(provisionId: string) {
+  const { treksApi } = await import('../api/treks')
+  await treksApi.claimProvision(code, provisionId)
+}
+
+async function onUnclaim(provisionId: string) {
+  const { treksApi } = await import('../api/treks')
+  await treksApi.unclaimProvision(code, provisionId)
 }
 
 function openAnnotation(itemName: string) { annotationItem.value = itemName }

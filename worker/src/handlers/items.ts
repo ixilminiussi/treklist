@@ -82,7 +82,7 @@ export async function upsertProvision(c: Context<{ Bindings: Env }>) {
   if (!trekker) return c.json({ error: 'unauthorized' }, 401)
 
   const { item_name, type, quantity } = await c.req.json<any>()
-  if (quantity < 1 || quantity > 20) return c.json({ error: 'quantity must be 1-20' }, 400)
+  if (quantity < 0 || quantity > 20) return c.json({ error: 'quantity must be 0-20' }, 400)
 
   const existing = await c.env.DB.prepare(
     `SELECT id FROM item_provisions WHERE trekker_id = ? AND item_name = ?`
