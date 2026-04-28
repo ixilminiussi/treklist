@@ -65,6 +65,8 @@
                 v-for="t in store.trekkers" :key="t.id"
                 class="td-status"
                 :class="{ mine: t.id === store.myTrekker?.id }"
+                @dragover.prevent
+                @drop="onDropClaim($event)"
               >
                 <StatusPicker
                   v-if="t.id === store.myTrekker?.id"
@@ -293,6 +295,12 @@ async function onClaim(provisionId: string) {
 async function onUnclaim(provisionId: string) {
   const { treksApi } = await import('../api/treks')
   await treksApi.unclaimProvision(code, provisionId)
+}
+
+function onDropClaim(e: DragEvent) {
+  const action = e.dataTransfer?.getData('action')
+  const pid = e.dataTransfer?.getData('provision_id')
+  if (action === 'claim' && pid) onClaim(pid)
 }
 
 function openAnnotation(itemName: string) { annotationItem.value = itemName }
