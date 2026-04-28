@@ -10,14 +10,6 @@
         <span class="trek-meta">{{ store.trek.trek_type }} · {{ store.trek.camping || 'any camp' }} · {{ store.trek.weather }}</span>
       </div>
       <div class="trek-code" @click="copyCode" title="click to copy">{{ store.trek.code }}</div>
-      <div class="trekkers-pills">
-        <div v-for="t in store.trekkers" :key="t.id" class="trekker-pill" :class="{ me: t.id === store.myTrekker?.id }">
-          <span class="trekker-dot" :style="{ background: t.color }" />
-          <span>{{ t.display_name }}</span>
-          <span class="trekker-weight">{{ (store.bagWeight(t.id) / 1000).toFixed(1) }}kg</span>
-          <button v-if="isCreator && t.id !== store.myTrekker?.id" class="kick-btn" @click="kick(t.id)">✕</button>
-        </div>
-      </div>
       <div class="header-actions">
         <button class="btn btn-ghost btn-sm" @click="tab = tab === 'bag' ? 'checklist' : 'bag'">
           {{ tab === 'bag' ? '← checklist' : 'bag view' }}
@@ -37,7 +29,15 @@
               class="th-trekker"
               :class="{ mine: t.id === store.myTrekker?.id }"
               :style="{ borderBottom: `3px solid ${t.color}` }"
-            >{{ t.display_name }}</th>
+            >
+              {{ t.display_name }}
+              <button
+                v-if="isCreator && t.id !== store.myTrekker?.id"
+                class="kick-btn"
+                @click="kick(t.id)"
+                title="kick"
+              >✕</button>
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -311,26 +311,13 @@ function copyCode() { navigator.clipboard.writeText(store.trek?.code ?? '') }
   flex-shrink: 0;
 }
 
-.trekkers-pills {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  flex: 1;
+.kick-btn {
+  background: none; border: none; color: transparent;
+  cursor: pointer; font-size: 0.7rem; padding: 0 0.2rem; line-height: 1;
+  transition: color 0.12s;
 }
-.trekker-pill {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.25rem 0.6rem;
-  border-radius: 20px;
-  border: 1px solid #2a2d3e;
-  font-size: 0.8rem;
-}
-.trekker-pill.me { background: #1a1d2e; border-color: #3a3f5a; }
-.trekker-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-.trekker-weight { font-size: 0.72rem; color: #8b92a8; }
-.kick-btn { background: none; border: none; color: #8b92a8; cursor: pointer; font-size: 0.7rem; padding: 0 0.1rem; line-height: 1; }
-.kick-btn:hover { color: #e05252; }
+.th-trekker:hover .kick-btn { color: #8b92a8; }
+.kick-btn:hover { color: #e05252 !important; }
 
 .header-actions { display: flex; gap: 0.5rem; align-items: center; margin-left: auto; }
 
@@ -475,8 +462,7 @@ function copyCode() { navigator.clipboard.writeText(store.trek?.code ?? '') }
     flex-wrap: wrap;
   }
   .trek-code { font-size: 0.95rem; letter-spacing: 0.15em; }
-  .trekkers-pills { gap: 0.35rem; }
-  .trekker-pill { padding: 0.2rem 0.45rem; font-size: 0.75rem; }
+
   .header-actions { margin-left: 0; width: 100%; justify-content: flex-end; }
 
   /* checklist: touch scroll */

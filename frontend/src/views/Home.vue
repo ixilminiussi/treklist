@@ -373,6 +373,8 @@ async function joinByCode() {
 
 async function confirmAction(trek: LobbyTrek) {
   confirmingTrek.value = null
+  const trekToken = localStorage.getItem(`session_token_${trek.code}`)
+  if (trekToken) sessionStorage.setItem('session_token', trekToken)
   const isOwner = trek.creator_id === auth.user!.id
   if (isOwner) {
     await apiClient.post(`/api/treks/${trek.code}/close`)
