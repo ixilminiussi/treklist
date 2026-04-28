@@ -80,30 +80,48 @@
             <div
               v-for="trek in myTreks" :key="trek.code"
               class="trek-row" :class="{ 'is-creator': trek.creator_id === auth.user!.id }"
-              @click="router.push(`/trek/${trek.code}`)"
             >
-              <div class="trek-row-main">
-                <div class="trek-row-top">
-                  <span class="trek-name">{{ trek.name }}</span>
-                  <span v-if="trek.creator_id === auth.user!.id" class="host-badge">host</span>
-                  <span class="code-pill">{{ trek.code }}</span>
+              <!-- click-to-enter area -->
+              <div class="trek-row-clickable" @click="router.push(`/trek/${trek.code}`)">
+                <div class="trek-row-main">
+                  <div class="trek-row-top">
+                    <span class="trek-name">{{ trek.name }}</span>
+                    <span v-if="trek.creator_id === auth.user!.id" class="host-badge">host</span>
+                    <span class="code-pill">{{ trek.code }}</span>
+                  </div>
+                  <div class="trek-meta">
+                    <span class="meta-tag">{{ trek.trek_type }}</span>
+                    <span v-if="trek.camping" class="meta-tag">{{ trek.camping }}</span>
+                    <span v-if="trek.weather" class="meta-tag">{{ trek.weather }}</span>
+                  </div>
                 </div>
-                <div class="trek-meta">
-                  <span class="meta-tag">{{ trek.trek_type }}</span>
-                  <span v-if="trek.camping" class="meta-tag">{{ trek.camping }}</span>
-                  <span v-if="trek.weather" class="meta-tag">{{ trek.weather }}</span>
+                <div class="players">
+                  <div v-for="t in trek.trekkers" :key="t.id"
+                    class="player-capsule" :class="{ me: t.id === trek.my_trekker_id }"
+                  >
+                    <span class="capsule-dot" :style="{ background: t.color }" />
+                    <span class="capsule-name">{{ t.display_name }}</span>
+                  </div>
                 </div>
               </div>
-              <div class="players">
-                <div v-for="t in trek.trekkers" :key="t.id"
-                  class="player-chip" :class="{ me: t.id === trek.my_trekker_id }"
-                  :title="t.display_name"
+
+              <!-- leave / close -->
+              <div class="trek-row-action" @click.stop>
+                <template v-if="confirmingTrek === trek.code">
+                  <span class="confirm-label">
+                    {{ trek.creator_id === auth.user!.id ? 'close trek?' : 'leave trek?' }}
+                  </span>
+                  <button class="action-btn danger" @click="confirmAction(trek)">yes</button>
+                  <button class="action-btn" @click="confirmingTrek = null">no</button>
+                </template>
+                <button v-else
+                  class="action-btn"
+                  :class="{ host: trek.creator_id === auth.user!.id }"
+                  @click="confirmingTrek = trek.code"
                 >
-                  <span class="player-dot" :style="{ background: t.color }" />
-                  <span class="player-name">{{ t.display_name }}</span>
-                </div>
+                  {{ trek.creator_id === auth.user!.id ? 'close' : 'leave' }}
+                </button>
               </div>
-              <span class="enter-arrow">→</span>
             </div>
           </div>
         </div>
@@ -220,6 +238,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { useTrekStore } from '../stores/trek'
 import { treksApi, type LobbyTrek, type LobbyTrekker } from '../api/treks'
+import apiClient from '../api/client'
 
 const COLORS = ['#4f9cf9','#f97f4f','#4fcc8a','#c97ff9','#f9cf4f','#f94f7f','#4ff9f0','#a0aec0']
 const SEX_OPTIONS = [
@@ -238,6 +257,7 @@ const error = ref('')
 const joinCode = ref('')
 const myTreks = ref<LobbyTrek[]>([])
 const loadingTreks = ref(true)
+const confirmingTrek = ref<string | null>(null)
 const guestName = ref('')
 const guestColor = ref(COLORS[0])
 const guestWeight = ref<number | ''>('')
@@ -349,6 +369,18 @@ async function joinByCode() {
     router.push(`/trek/${code}`)
   } catch (e: any) { error.value = e?.response?.data?.error ?? 'failed' }
   finally { loading.value = false }
+}
+
+async function confirmAction(trek: LobbyTrek) {
+  confirmingTrek.value = null
+  const isOwner = trek.creator_id === auth.user!.id
+  if (isOwner) {
+    await apiClient.post(`/api/treks/${trek.code}/close`)
+  } else {
+    // leave = kick own trekker (need to find my trekker id)
+    await apiClient.delete(`/api/treks/${trek.code}/trekkers/${trek.my_trekker_id}`)
+  }
+  myTreks.value = myTreks.value.filter(t => t.code !== trek.code)
 }
 </script>
 
@@ -477,13 +509,19 @@ async function joinByCode() {
 .trek-list { display: flex; flex-direction: column; gap: 0.5rem; }
 
 .trek-row {
-  display: flex; align-items: center; gap: 1rem;
-  padding: 0.85rem 1rem; border-radius: 10px;
-  border: 1px solid #1e2030; background: #141620;
-  cursor: pointer; transition: border-color 0.15s, background 0.15s;
+  display: flex; align-items: stretch;
+  border-radius: 10px; border: 1px solid #1e2030; background: #141620;
+  overflow: hidden; transition: border-color 0.15s;
 }
-.trek-row:hover { border-color: #2a2d3e; background: #191c2a; }
+.trek-row:hover { border-color: #2a2d3e; }
 .trek-row.is-creator { border-left: 3px solid #4f9cf9; }
+
+.trek-row-clickable {
+  flex: 1; display: flex; align-items: center; gap: 1rem;
+  padding: 0.85rem 1rem; cursor: pointer; min-width: 0;
+  transition: background 0.15s;
+}
+.trek-row-clickable:hover { background: #191c2a; }
 
 .trek-row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.25rem; }
 .trek-row-top { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
@@ -504,17 +542,40 @@ async function joinByCode() {
   background: #1a1d2e; border: 1px solid #1e2030;
   padding: 1px 6px; border-radius: 4px;
 }
-.players { display: flex; flex-wrap: wrap; gap: 0.35rem; }
-.player-chip {
-  display: flex; align-items: center; gap: 0.25rem;
-  padding: 2px 7px; border-radius: 20px;
-  background: #1a1d2e; border: 1px solid #1e2030; font-size: 0.72rem;
+
+/* large player capsules */
+.players { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
+.player-capsule {
+  display: flex; align-items: center; gap: 0.4rem;
+  padding: 0.3rem 0.75rem; border-radius: 20px;
+  background: #1a1d2e; border: 1px solid #1e2030;
+  font-size: 0.85rem; font-weight: 500;
 }
-.player-chip.me { border-color: #2a2d3e; }
-.player-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-.player-name { color: #c8ccd8; max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.enter-arrow { color: #555e78; font-size: 1rem; flex-shrink: 0; transition: color 0.15s, transform 0.15s; }
-.trek-row:hover .enter-arrow { color: #e8eaf0; transform: translateX(3px); }
+.player-capsule.me {
+  background: #1a1f2e; border-color: #2a3a5e;
+}
+.capsule-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.capsule-name { color: #c8ccd8; white-space: nowrap; }
+
+/* leave / close action */
+.trek-row-action {
+  display: flex; align-items: center; gap: 0.4rem;
+  padding: 0 0.85rem;
+  border-left: 1px solid #1e2030;
+  background: #0f1117;
+  flex-shrink: 0;
+}
+.confirm-label { font-size: 0.75rem; color: #8b92a8; white-space: nowrap; }
+.action-btn {
+  background: none; border: 1px solid #2a2d3e; color: #8b92a8;
+  padding: 0.25rem 0.6rem; border-radius: 5px; font-size: 0.78rem;
+  cursor: pointer; white-space: nowrap; transition: all 0.12s;
+}
+.action-btn:hover { border-color: #4a4f6a; color: #e8eaf0; }
+.action-btn.danger { border-color: #7a2a2a; color: #e05252; }
+.action-btn.danger:hover { background: #2a1a1a; border-color: #e05252; }
+.action-btn.host { border-color: #2a3a5e; color: #4f9cf9; }
+.action-btn.host:hover { background: #1a2a3e; }
 
 
 /* ── Guest hero ─────────────────────────────────────────── */
