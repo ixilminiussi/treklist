@@ -72,6 +72,7 @@ export const useTrekStore = defineStore('trek', () => {
     myTrekker.value = t
     sessionStorage.setItem('my_trekker', JSON.stringify(t))
     sessionStorage.setItem('session_token', token)
+    sessionStorage.setItem(`session_token_${t.trek_code}`, token)
   }
 
   async function createTrek(data: any) {
@@ -112,6 +113,10 @@ export const useTrekStore = defineStore('trek', () => {
         (wts as any[]).map((w: any) => [w.item_name, w.default_grams])
       )
     }
+
+    // restore the correct session token for this trek
+    const trekToken = sessionStorage.getItem(`session_token_${code}`)
+    if (trekToken) sessionStorage.setItem('session_token', trekToken)
 
     startPolling(code)
   }
