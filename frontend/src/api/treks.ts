@@ -30,6 +30,27 @@ export interface Trekker {
   sex?: 'M' | 'F' | 'X'
 }
 
+export interface LobbyTrekker {
+  id: string
+  color: string
+  display_name: string
+  user_id?: string
+}
+
+export interface LobbyTrek {
+  code: string
+  name: string
+  trek_type: string
+  food_source: string
+  camping: string
+  weather: string
+  status: string
+  created_at: string
+  creator_id: string
+  my_trekker_id: string
+  trekkers: LobbyTrekker[]
+}
+
 export interface ChecklistItem {
   type: 'category' | 'item'
   name: string
@@ -79,6 +100,9 @@ export const treksApi = {
 
   setWeight: (code: string, item_name: string, custom_grams: number) =>
     api.post(`/api/treks/${code}/items/weight`, { item_name, custom_grams }).then(r => r.data),
+
+  listForUser: (userID: string) =>
+    api.get(`/api/users/${userID}/treks`).then(r => r.data as LobbyTrek[]),
 
   getChecklist: () =>
     api.get('/api/checklist').then(r => r.data as ChecklistItem[]),

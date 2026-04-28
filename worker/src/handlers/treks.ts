@@ -102,6 +102,47 @@ export async function getTrek(c: Context<{ Bindings: Env }>) {
   return c.json({ trek, trekkers: trekkers.map(trekkerFromRow) })
 }
 
+export async function listUserTreks(c: Context<{ Bindings: Env }>) {
+  const userID = c.req.param('userID')
+  const { results } = await c.env.DB.prepare(`
+    SELECT tr.*, tk.color as my_color, tk.id as trekker_id
+    FROM trekkers tk
+    JOIN treks tr ON tk.trek_code = tr.code
+    WHERE tk.user_id = ? AND tk.kicked_at IS NULL AND tr.status = 'active'
+    ORDER BY tr.created_at DESC
+  `).bind(userID).all<any>()
+
+  const codes = results.map(r => r.code)
+  let trekkersByCode: Record<string, any[]> = {}
+  for (const code of codes) {
+    const { results: tkrs } = await c.env.DB.prepare(
+      `SELECT t.id, t.color, t.user_id, t.guest_name, u.username
+       FROM trekkers t LEFT JOIN users u ON t.user_id = u.id
+       WHERE t.trek_code = ? AND t.kicked_at IS NULL`
+    ).bind(code).all<any>()
+    trekkersByCode[code] = tkrs.map(t => ({
+      id: t.id,
+      color: t.color,
+      display_name: t.username || t.guest_name || 'unknown',
+      user_id: t.user_id ?? undefined,
+    }))
+  }
+
+  return c.json(results.map(r => ({
+    code: r.code,
+    name: r.name,
+    trek_type: r.trek_type,
+    food_source: r.food_source,
+    camping: r.camping,
+    weather: r.weather,
+    status: r.status,
+    created_at: r.created_at,
+    creator_id: r.creator_id,
+    my_trekker_id: r.trekker_id,
+    trekkers: trekkersByCode[r.code] ?? [],
+  })))
+}
+
 export async function closeTrek(c: Context<{ Bindings: Env }>) {
   const code = c.req.param('code').toUpperCase()
   const token = c.req.header('X-Session-Token') ?? ''
