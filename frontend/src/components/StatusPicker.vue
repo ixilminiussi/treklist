@@ -14,7 +14,7 @@
     v-else
     class="cycle-btn"
     :style="activeStyle"
-    :class="{ 'is-dont-need': status === 'dont_need' }"
+    :class="{ 'is-dont-need': status === 'dont_need' || status === '' }"
     @click="cycle"
   >{{ label }}</button>
 </template>
@@ -43,12 +43,13 @@ const emit = defineEmits<{
 const CYCLE = ['need', 'will_get', 'got_it', 'provided', 'shared', 'dont_need']
 
 const LABELS: Record<string, string> = {
+  '': "don't need",
   need: 'Need', will_get: 'Will get', got_it: 'Got it',
-  provided: 'Provided', shared: 'Shared', dont_need: 'Skip',
+  provided: 'Provided', shared: 'Shared', dont_need: "don't need",
 }
 
 const STATUS_COLORS: Record<string, { bg: string; border: string; text: string }> = {
-  '':         { bg: 'transparent', border: '#2a2d3e', text: '#8b92a8' },
+  '':         { bg: '#1a1a1a', border: '#333', text: '#555e78' },
   need:       { bg: '#2a1a1a',     border: '#c0392b', text: '#e74c3c' },
   will_get:   { bg: '#2a2200',     border: '#b8860b', text: '#f9cf4f' },
   got_it:     { bg: '#1a2a1a',     border: '#27ae60', text: '#4fcc8a' },
@@ -81,6 +82,6 @@ function cycle() {
   cursor: pointer;
   transition: all 0.12s;
 }
-.cycle-btn:hover { filter: brightness(1.2); }
-.cycle-btn.is-dont-need { text-decoration: line-through; }
+.cycle-btn:hover { filter: brightness(1.3); }
+.cycle-btn.is-dont-need { text-decoration: line-through; font-size: 0.78rem; }
 </style>
