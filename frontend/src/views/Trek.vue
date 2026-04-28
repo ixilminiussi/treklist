@@ -3,6 +3,64 @@
   <div v-else-if="!store.trek" class="center-msg">trek not found</div>
   <div v-else class="trek-layout">
 
+  <!-- identity gate — shown when we don't know who the user is -->
+  <transition name="fade">
+    <div v-if="needsIdentity" class="id-overlay">
+      <div class="id-modal">
+        <h2>who are you?</h2>
+        <p class="id-sub">{{ store.trek.name }}</p>
+
+        <!-- existing guests -->
+        <template v-if="guestTrekkers.length > 0">
+          <div class="id-section-label">returning guest</div>
+          <div class="id-guest-list">
+            <button
+              v-for="gt in guestTrekkers" :key="gt.id"
+              class="id-guest-btn" :class="{ selected: selectedGuestId === gt.id }"
+              @click="selectedGuestId = gt.id"
+            >
+              <span class="id-dot" :style="{ background: gt.color }" />
+              {{ gt.display_name }}
+            </button>
+          </div>
+          <button class="btn btn-primary" :disabled="idLoading" @click="resumeAsGuest">
+            {{ idLoading ? 'loading…' : 'continue as selected' }}
+          </button>
+          <div class="id-divider">or create a new profile</div>
+        </template>
+
+        <!-- new guest form -->
+        <div class="id-form">
+          <div class="field"><label>name</label><input v-model="guestName" placeholder="Trail name" /></div>
+          <div class="field"><label>color</label>
+            <div class="color-row">
+              <button v-for="c in COLORS" :key="c" class="id-swatch"
+                :class="{ active: guestColor === c }" :style="{ background: c }"
+                @click="guestColor = c" />
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="field"><label>weight (kg)</label><input v-model.number="guestWeight" type="number" min="20" max="300" placeholder="70" /></div>
+            <div class="field"><label>sex</label>
+              <div class="radio-row">
+                <label v-for="opt in SEX_OPTS" :key="opt.v" class="radio-label">
+                  <input type="radio" :value="opt.v" v-model="guestSex" />{{ opt.l }}
+                </label>
+              </div>
+            </div>
+          </div>
+          <div class="field"><label>date of birth <span class="opt">optional</span></label>
+            <input v-model="guestBirthday" type="date" />
+          </div>
+          <div v-if="idError" class="error">{{ idError }}</div>
+          <button class="btn btn-primary" :disabled="idLoading" @click="joinAsNewGuest">
+            {{ idLoading ? 'joining…' : 'join trek' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </transition>
+
     <!-- top header -->
     <header class="trek-header">
       <div class="trek-info">
@@ -142,6 +200,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { treksApi } from '../api/treks'
 import { useTrekStore } from '../stores/trek'
 import { useAuthStore } from '../stores/auth'
 import StatusPicker from '../components/StatusPicker.vue'
@@ -152,12 +211,27 @@ const router = useRouter()
 const store = useTrekStore()
 const auth = useAuthStore()
 
+const COLORS = ['#4f9cf9','#f97f4f','#4fcc8a','#c97ff9','#f9cf4f','#f94f7f','#4ff9f0','#a0aec0']
+const SEX_OPTS = [{ v: 'M', l: 'M' }, { v: 'F', l: 'F' }, { v: 'X', l: 'X' }]
+
 const loading = ref(true)
 const tab = ref<'checklist' | 'bag'>('checklist')
 const bagTab = ref('')
 const annotationItem = ref<string | null>(null)
 const newAnnotation = ref('')
 const newItemName = ref('')
+
+// identity gate
+const needsIdentity = ref(false)
+const guestTrekkers = ref<{ id: string; display_name: string; color: string }[]>([])
+const selectedGuestId = ref<string | null>(null)
+const guestName = ref('')
+const guestColor = ref(COLORS[0])
+const guestWeight = ref<number | undefined>()
+const guestSex = ref('')
+const guestBirthday = ref('')
+const idLoading = ref(false)
+const idError = ref('')
 
 const code = route.params.code as string
 
@@ -167,10 +241,44 @@ onMounted(async () => {
   try {
     await store.loadTrek(code)
     if (store.trekkers.length) bagTab.value = store.trekkers[0].id
+    // if no recognised trekker for this trek, show identity gate
+    const myId = store.myTrekker?.id
+    const recognised = myId && store.trekkers.some(t => t.id === myId)
+    if (!recognised && !auth.user) {
+      guestTrekkers.value = store.trekkers.filter(t => !t.user_id)
+      needsIdentity.value = true
+    }
   } finally {
     loading.value = false
   }
 })
+
+async function resumeAsGuest() {
+  if (!selectedGuestId.value) return
+  idLoading.value = true; idError.value = ''
+  try {
+    const res = await treksApi.resumeGuest(code, selectedGuestId.value)
+    store.persistMyTrekker(res.trekker, res.session_token)
+    needsIdentity.value = false
+  } catch { idError.value = 'could not resume — try joining fresh' }
+  finally { idLoading.value = false }
+}
+
+async function joinAsNewGuest() {
+  if (!guestName.value) { idError.value = 'name required'; return }
+  idLoading.value = true; idError.value = ''
+  try {
+    await store.joinTrek(code, {
+      guest_name: guestName.value,
+      color: guestColor.value,
+      weight_kg: guestWeight.value,
+      sex: guestSex.value || undefined,
+      birthday: guestBirthday.value || undefined,
+    })
+    needsIdentity.value = false
+  } catch (e: any) { idError.value = e?.response?.data?.error ?? 'failed to join' }
+  finally { idLoading.value = false }
+}
 
 const isCreator = computed(() => !!auth.user && store.trek?.creator_id === auth.user.id)
 const bagTabColor = computed(() => store.trekkers.find(t => t.id === bagTab.value)?.color ?? '#4f9cf9')
@@ -192,7 +300,7 @@ function provisionFor(trekkerId: string, itemName: string) {
 const LABELS: Record<string, string> = {
   need: 'Need it', got_it: 'Got it', shared: 'Shared', provided: 'Provided',
 }
-const COLORS: Record<string, { bg: string; border: string; text: string }> = {
+const STATUS_BG: Record<string, { bg: string; border: string; text: string }> = {
   need:     { bg: '#2a1a1a', border: '#c0392b', text: '#e74c3c' },
   got_it:   { bg: '#1a2a1a', border: '#27ae60', text: '#4fcc8a' },
   shared:   { bg: '#231a2e', border: '#8e44ad', text: '#c97ff9' },
@@ -211,7 +319,7 @@ function otherLabel(trekkerId: string, itemName: string) {
   return LABELS[status] ?? ''
 }
 function otherStyle(trekkerId: string, itemName: string) {
-  return COLORS[statusOf(trekkerId, itemName)] ?? {}
+  return STATUS_BG[statusOf(trekkerId, itemName)] ?? {}
 }
 
 // flat list of rows for both columns to iterate in sync
@@ -263,7 +371,7 @@ async function onStatusChange(itemName: string, status: string) {
   // when switching to provided/shared with no provision yet, create one with 1 slot
   if ((status === 'provided' || status === 'shared') && !myProvision(itemName)) {
     const { treksApi } = await import('../api/treks')
-    const res = await treksApi.upsertProvision(code, itemName, status, 1)
+    const res = await treksApi.upsertProvision(code, itemName, status, 0)
     store.provisions.push({ id: res.provision_id, trekker_id: res.trekker_id, item_name: res.item_name, type: res.type, quantity: res.quantity, claims: [] })
   }
 }
@@ -547,4 +655,50 @@ function copyCode() { navigator.clipboard.writeText(store.trek?.code ?? '') }
 
   /* cycle button touch-friendly height */
 }
+
+/* ── Identity gate ─────────────────────────────────────── */
+.id-overlay {
+  position: fixed; inset: 0;
+  background: rgba(10,11,18,0.85);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 200; backdrop-filter: blur(4px);
+}
+.id-modal {
+  background: #141620; border: 1px solid #1e2030; border-radius: 14px;
+  padding: 2rem; width: 100%; max-width: 460px;
+  display: flex; flex-direction: column; gap: 1.1rem;
+  max-height: 90vh; overflow-y: auto;
+}
+.id-modal h2 { font-size: 1.2rem; font-weight: 800; }
+.id-sub { font-size: 0.85rem; color: #555e78; margin-top: -0.5rem; }
+.id-section-label { font-size: 0.72rem; color: #555e78; text-transform: uppercase; letter-spacing: 0.06em; }
+.id-guest-list { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.id-guest-btn {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.4rem 0.85rem; border-radius: 20px;
+  border: 1px solid #2a2d3e; background: #1a1d2e;
+  font-size: 0.88rem; cursor: pointer; transition: border-color 0.12s;
+  color: #c8ccd8;
+}
+.id-guest-btn:hover { border-color: #4a4f6a; }
+.id-guest-btn.selected { border-color: #4f9cf9; background: #1a2a3e; color: #e8eaf0; }
+.id-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.id-divider {
+  text-align: center; font-size: 0.75rem; color: #555e78;
+  border-top: 1px solid #1e2030; padding-top: 0.75rem; margin-top: 0.25rem;
+}
+.id-form { display: flex; flex-direction: column; gap: 0.85rem; }
+.field { display: flex; flex-direction: column; gap: 0.35rem; }
+.field label { font-size: 0.75rem; color: #8b92a8; text-transform: uppercase; letter-spacing: 0.05em; }
+.field input, .field select { width: 100%; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; }
+.color-row { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.id-swatch { width: 24px; height: 24px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; transition: border-color 0.12s, transform 0.12s; }
+.id-swatch.active { border-color: #fff; transform: scale(1.2); }
+.radio-row { display: flex; gap: 0.75rem; flex-wrap: wrap; padding-top: 0.2rem; }
+.radio-label { display: flex; align-items: center; gap: 0.3rem; font-size: 0.88rem; cursor: pointer; }
+.opt { font-size: 0.7rem; color: #555e78; text-transform: none; letter-spacing: 0; font-weight: 400; }
+.error { color: #f97f4f; font-size: 0.82rem; }
+.fade-enter-active, .fade-leave-active { transition: opacity 0.15s; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
 </style>

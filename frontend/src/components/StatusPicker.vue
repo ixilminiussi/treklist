@@ -1,6 +1,6 @@
 <template>
   <SlotCapsule
-    v-if="provision && (status === 'provided' || status === 'shared')"
+    v-if="provision && (status === 'provided' || status === 'shared') && provision.quantity > 0"
     :provision="provision"
     :trekker-colors="trekkerColors"
     :my-trekker-id="myTrekkerId"
@@ -10,13 +10,22 @@
     @claim="$emit('claim', $event)"
     @unclaim="$emit('unclaim', $event)"
   />
-  <button
+  <div
     v-else
-    class="cycle-btn"
-    :style="activeStyle"
-    :class="{ 'is-dont-need': status === 'dont_need' || status === '' }"
-    @click="cycle"
-  >{{ label }}</button>
+    class="cycle-wrap"
+    :class="{ 'has-slots-ctrl': status === 'provided' || status === 'shared' }"
+  >
+    <div v-if="status === 'provided' || status === 'shared'" class="slot-controls">
+      <button class="ctrl-btn" @click.stop="$emit('addSlot')">+</button>
+      <button class="ctrl-btn" @click.stop="$emit('removeSlot')">−</button>
+    </div>
+    <button
+      class="cycle-btn"
+      :style="activeStyle"
+      :class="{ 'is-dont-need': status === 'dont_need' || status === '' }"
+      @click="cycle"
+    >{{ label }}</button>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -72,9 +81,44 @@ function cycle() {
 </script>
 
 <style scoped>
-.cycle-btn {
+.cycle-wrap {
+  position: relative;
   width: 100%;
   height: 60px;
+}
+
+.slot-controls {
+  position: absolute;
+  top: -12px;
+  right: 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  z-index: 2;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s;
+}
+.cycle-wrap.has-slots-ctrl:hover .slot-controls {
+  opacity: 1;
+  pointer-events: all;
+}
+.ctrl-btn {
+  width: 20px; height: 20px;
+  border-radius: 4px;
+  border: 1px solid #3a3f5a;
+  background: #1a1d2e;
+  color: #8b92a8;
+  font-size: 0.85rem; line-height: 1;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.12s;
+}
+.ctrl-btn:hover { border-color: #e8eaf0; color: #e8eaf0; background: #2a2d3e; }
+
+.cycle-btn {
+  width: 100%;
+  height: 100%;
   border-radius: 6px;
   border: 1px solid #2a2d3e;
   font-size: 0.88rem;
