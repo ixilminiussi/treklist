@@ -203,6 +203,6 @@ export const useTrekStore = defineStore('trek', () => {
     trek, trekkers, myTrekker, checklist, defaultWeights,
     statuses, provisions, annotations, customItems, trekkerWeights,
     trekkerMap, myStatuses,
-    createTrek, joinTrek, loadTrek, setStatus, bagWeight, filteredChecklist, stopPolling,
+    createTrek, joinTrek, loadTrek, setStatus, bagWeight, filteredChecklist, stopPolling, persistMyTrekker,
   }
 })

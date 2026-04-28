@@ -143,6 +143,31 @@ export async function listUserTreks(c: Context<{ Bindings: Env }>) {
   })))
 }
 
+export async function resumeGuest(c: Context<{ Bindings: Env }>) {
+  const code = c.req.param('code').toUpperCase()
+  const body = await c.req.json<any>()
+  const { trekker_id } = body
+  if (!trekker_id) return c.json({ error: 'trekker_id required' }, 400)
+
+  const trek = await c.env.DB.prepare(`SELECT * FROM treks WHERE code = ?`).bind(code).first<any>()
+  if (!trek) return c.json({ error: 'trek not found' }, 404)
+
+  const trekker = await c.env.DB.prepare(
+    `SELECT * FROM trekkers WHERE id = ? AND trek_code = ? AND user_id IS NULL AND kicked_at IS NULL`
+  ).bind(trekker_id, code).first<any>()
+  if (!trekker) return c.json({ error: 'guest trekker not found' }, 404)
+
+  const token = crypto.randomUUID()
+  await c.env.DB.prepare(`UPDATE trekkers SET session_token = ? WHERE id = ?`)
+    .bind(token, trekker_id).run()
+
+  return c.json({
+    trek,
+    trekker: trekkerFromRow(trekker),
+    session_token: token,
+  })
+}
+
 export async function closeTrek(c: Context<{ Bindings: Env }>) {
   const code = c.req.param('code').toUpperCase()
   const token = c.req.header('X-Session-Token') ?? ''

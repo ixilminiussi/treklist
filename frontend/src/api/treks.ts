@@ -62,8 +62,11 @@ export const treksApi = {
   create: (data: TrekSettings & { guest_name?: string; user_id?: string; color: string }) =>
     api.post('/api/treks', data).then(r => r.data),
 
-  join: (code: string, data: { guest_name?: string; user_id?: string; color: string }) =>
+  join: (code: string, data: { guest_name?: string; user_id?: string; color: string; weight_kg?: number; sex?: string; gender?: string; birthday?: string }) =>
     api.post(`/api/treks/${code}/join`, data).then(r => r.data),
+
+  resumeGuest: (code: string, trekker_id: string) =>
+    api.post(`/api/treks/${code}/resume-guest`, { trekker_id }).then(r => r.data),
 
   get: (code: string) =>
     api.get(`/api/treks/${code}`).then(r => r.data),

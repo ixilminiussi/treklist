@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { register, login, getProfile, updateProfile } from './handlers/auth'
-import { createTrek, joinTrek, getTrek, closeTrek, kickTrekker, listUserTreks } from './handlers/treks'
+import { createTrek, joinTrek, getTrek, closeTrek, kickTrekker, listUserTreks, resumeGuest } from './handlers/treks'
 import {
   getTrekItems, setItemStatus, upsertProvision, claimProvision,
   unclaimProvision, addAnnotation, deleteAnnotation, addCustomItem,
@@ -41,6 +41,7 @@ app.get('/api/users/:userID/treks', listUserTreks)
 app.post('/api/treks', createTrek)
 app.get('/api/treks/:code', getTrek)
 app.post('/api/treks/:code/join', joinTrek)
+app.post('/api/treks/:code/resume-guest', resumeGuest)
 app.post('/api/treks/:code/close', closeTrek)
 app.delete('/api/treks/:code/trekkers/:trekkerID', kickTrekker)
 

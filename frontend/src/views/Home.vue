@@ -161,18 +161,52 @@
           <template v-else-if="mode === 'join'">
             <h2>join trek</h2>
             <div class="field"><label>trek code</label>
-              <input v-model="joinCode" placeholder="ABCDE" maxlength="5" style="text-transform:uppercase;letter-spacing:0.2em;" />
+              <input v-model="joinCode" placeholder="ABCDE" maxlength="5" style="text-transform:uppercase;letter-spacing:0.2em;"
+                @input="onJoinCodeInput" />
             </div>
-            <template v-if="!auth.user">
+
+            <!-- existing guest trekkers -->
+            <template v-if="!auth.user && guestTrekkers.length > 0">
+              <div class="section-label">resume as existing guest</div>
+              <div class="guest-cards">
+                <button
+                  v-for="gt in guestTrekkers" :key="gt.id"
+                  class="guest-card" :class="{ selected: selectedGuestId === gt.id }"
+                  @click="selectedGuestId = selectedGuestId === gt.id ? null : gt.id"
+                >
+                  <span class="guest-dot" :style="{ background: gt.color }" />
+                  <span class="guest-name">{{ gt.display_name }}</span>
+                </button>
+              </div>
+              <div class="or-divider">— or create new profile —</div>
+            </template>
+
+            <template v-if="!auth.user && selectedGuestId === null">
               <div class="field"><label>your name</label><input v-model="guestName" placeholder="Trail name" /></div>
               <div class="field"><label>your color</label>
                 <div class="color-row">
                   <button v-for="c in COLORS" :key="c" class="swatch" :class="{ active: guestColor === c }" :style="{ background: c }" @click="guestColor = c" />
                 </div>
               </div>
+              <div class="field"><label>weight (kg) <span class="optional">optional</span></label>
+                <input v-model.number="guestWeight" type="number" min="20" max="300" step="0.5" placeholder="e.g. 70" />
+              </div>
+              <div class="field">
+                <label>biological sex <span class="optional">optional — used for calorie estimates</span></label>
+                <div class="radio-row">
+                  <label class="radio-label" v-for="opt in SEX_OPTIONS" :key="opt.value">
+                    <input type="radio" :value="opt.value" v-model="guestSex" />
+                    {{ opt.label }}
+                  </label>
+                </div>
+              </div>
+              <div class="field"><label>date of birth <span class="optional">optional — used for calorie estimates</span></label>
+                <input v-model="guestBirthday" type="date" />
+              </div>
             </template>
+
             <div v-if="error" class="error">{{ error }}</div>
-            <button class="btn btn-primary" :disabled="loading" @click="joinByCode">{{ loading ? 'joining…' : 'join trek' }}</button>
+            <button class="btn btn-primary" :disabled="loading" @click="joinByCode">{{ loading ? 'joining…' : (selectedGuestId ? 'resume trek' : 'join trek') }}</button>
           </template>
         </div>
       </div>
@@ -181,13 +215,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { useTrekStore } from '../stores/trek'
-import { treksApi, type LobbyTrek } from '../api/treks'
+import { treksApi, type LobbyTrek, type LobbyTrekker } from '../api/treks'
 
 const COLORS = ['#4f9cf9','#f97f4f','#4fcc8a','#c97ff9','#f9cf4f','#f94f7f','#4ff9f0','#a0aec0']
+const SEX_OPTIONS = [
+  { value: 'M', label: 'male' },
+  { value: 'F', label: 'female' },
+  { value: 'X', label: 'other / prefer not to say' },
+]
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -201,6 +240,27 @@ const myTreks = ref<LobbyTrek[]>([])
 const loadingTreks = ref(true)
 const guestName = ref('')
 const guestColor = ref(COLORS[0])
+const guestWeight = ref<number | ''>('')
+const guestSex = ref<'M' | 'F' | 'X' | ''>('')
+const guestBirthday = ref('')
+const guestTrekkers = ref<LobbyTrekker[]>([])
+const selectedGuestId = ref<string | null>(null)
+
+let fetchCodeTimer: ReturnType<typeof setTimeout> | null = null
+
+async function onJoinCodeInput() {
+  const code = joinCode.value.trim().toUpperCase()
+  selectedGuestId.value = null
+  guestTrekkers.value = []
+  if (fetchCodeTimer) clearTimeout(fetchCodeTimer)
+  if (code.length !== 5) return
+  fetchCodeTimer = setTimeout(async () => {
+    try {
+      const data = await treksApi.get(code)
+      guestTrekkers.value = (data.trekkers as LobbyTrekker[]).filter(t => !t.user_id)
+    } catch { guestTrekkers.value = [] }
+  }, 400)
+}
 
 const form = reactive({ name: '', trek_type: 'Hike', food_source: '', camping: '', weather: 'Mixed', temperature: 'Mixed' })
 
@@ -269,10 +329,23 @@ async function create() {
 async function joinByCode() {
   const code = joinCode.value.trim().toUpperCase()
   if (code.length !== 5) { error.value = 'enter a 5-letter code'; return }
-  if (!auth.user && !guestName.value) { error.value = 'your name required'; return }
   loading.value = true; error.value = ''
   try {
-    await trekStore.joinTrek(code, { guest_name: auth.user ? undefined : guestName.value, user_id: auth.user?.id, color: auth.user?.color ?? guestColor.value })
+    if (!auth.user && selectedGuestId.value) {
+      // Resume existing guest trekker
+      const res = await treksApi.resumeGuest(code, selectedGuestId.value)
+      trekStore.persistMyTrekker(res.trekker, res.session_token)
+    } else {
+      if (!auth.user && !guestName.value) { error.value = 'your name required'; loading.value = false; return }
+      await trekStore.joinTrek(code, {
+        guest_name: auth.user ? undefined : guestName.value,
+        user_id: auth.user?.id,
+        color: auth.user?.color ?? guestColor.value,
+        weight_kg: guestWeight.value !== '' ? guestWeight.value : undefined,
+        sex: guestSex.value || undefined,
+        birthday: guestBirthday.value || undefined,
+      })
+    }
     router.push(`/trek/${code}`)
   } catch (e: any) { error.value = e?.response?.data?.error ?? 'failed' }
   finally { loading.value = false }
@@ -479,4 +552,22 @@ async function joinByCode() {
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
 .color-row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
 .error { color: #f97f4f; font-size: 0.85rem; }
+
+.section-label { font-size: 0.72rem; color: #555e78; text-transform: uppercase; letter-spacing: 0.06em; }
+.guest-cards { display: flex; flex-direction: column; gap: 0.4rem; }
+.guest-card {
+  display: flex; align-items: center; gap: 0.65rem;
+  padding: 0.55rem 0.85rem; border-radius: 8px;
+  border: 1px solid #1e2030; background: #141620;
+  cursor: pointer; transition: border-color 0.15s, background 0.15s;
+  font-size: 0.9rem; color: #c8ccd8; text-align: left;
+}
+.guest-card:hover { border-color: #2a2d3e; background: #191c2a; }
+.guest-card.selected { border-color: #4f9cf9; background: #111d30; }
+.guest-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.guest-name { font-weight: 600; }
+.or-divider { text-align: center; font-size: 0.72rem; color: #555e78; }
+.optional { font-weight: 400; color: #555e78; text-transform: none; letter-spacing: 0; font-size: 0.75rem; }
+.radio-row { display: flex; gap: 1rem; flex-wrap: wrap; }
+.radio-label { display: flex; align-items: center; gap: 0.35rem; font-size: 0.9rem; cursor: pointer; }
 </style>
